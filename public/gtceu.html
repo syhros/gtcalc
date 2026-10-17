@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GregTech CEu Calculator &amp; Machine Planner (GTCEu, Sky Greg) · gtcalc</title>
+  <meta name="description" content="Free GregTech CEu (GTCEu) calculator and machine planner: real GTCEu and Sky Greg recipes, machine counts, ratios, overclocks, parallel hatches, multiblocks and EU/t. Plan a GregTech factory in your browser." />
+  <link rel="canonical" href="https://gtcalc.app/gtceu" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="gtcalc" />
+  <meta property="og:title" content="GregTech CEu calculator and machine planner · gtcalc" />
+  <meta property="og:description" content="Plan GTCEu production lines: real recipes, machine counts, ratios, overclocks, parallel hatches and EU/t. Free, no login." />
+  <meta property="og:url" content="https://gtcalc.app/gtceu" />
+  <meta property="og:image" content="https://gtcalc.app/api/og" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="/legal.css" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "gtcalc for GregTech CEu",
+      "alternateName": ["GTCEu Calculator", "GregTech Calculator", "GregTech Machine Planner", "GregTech Factory Planner", "GT Calculator"],
+      "url": "https://gtcalc.app/gtceu",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any (runs in the browser)",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+      "description": "Free GregTech CEu (GTCEu) calculator and machine planner with real GTCEu and Sky Greg recipes."
+    }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="/?pack=base">Open the GTCEu planner &rsaquo;</a>
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" />gtcalc</a>
+    <nav><a href="/gtnh">GTNH</a><a href="/gtceu" aria-current="page">GTCEu</a><a href="/guide">Guide</a></nav>
+  </header>
+  <main>
+    <h1>GregTech CEu calculator and machine planner</h1>
+    <p class="updated">GTCEu 1.20 · Sky Greg · free, no login</p>
+
+    <p>gtcalc is a free <strong>GregTech calculator</strong> and factory planner for <strong>GregTech Community Edition Unofficial (GTCEu)</strong> modpacks. Add the machine you want to run, link its suppliers, and gtcalc works out how many machines of each kind you need, which voltage tier to build them at, and how much EU/t the line uses.</p>
+
+    <p><a class="cta" href="/?pack=base">Open the GTCEu planner</a> <a class="cta alt" href="/?pack=skygreg">Open it for Sky Greg</a></p>
+
+    <h2>What it does</h2>
+    <ul>
+      <li><strong>Real recipes</strong>: about 30,000 from a GTCEu recipe dump, and 34,000 for the Sky Greg modpack (its KubeJS recipes included).</li>
+      <li><strong>Machine counts and ratios</strong>: the whole canvas is solved at once, so byproducts are used before any machine runs harder, and the cheaper route wins.</li>
+      <li><strong>Overclocks</strong>: each tier above a recipe's base halves the craft time for 4x the EU/t. gtcalc shows the speed and the power at every tier.</li>
+      <li><strong>Multiblocks and parallel hatches</strong>: run a recipe in a large machine, fit a 4x, 16x, 64x or 256x parallel control hatch, and see the EU/t it really draws.</li>
+      <li><strong>Generators</strong>: combustion generators, large combustion and extreme engines, large turbines with rotors, and large boilers, with fuel use per second.</li>
+      <li><strong>Auto Ratio</strong> picks a tier for every machine in one click (most efficient, fewest machines, or balanced), within your EU/t budget.</li>
+    </ul>
+
+    <figure><img src="/guide/auto-ratio.webp" alt="Before and after Auto Ratio: a Gas Collector, Centrifuges and a Chemical Reactor making ammonia, balanced in one click" loading="lazy" width="2000" height="1243" /><figcaption>Before and after Auto Ratio: one Centrifuge was the bottleneck; now six feed the reactors.</figcaption></figure>
+
+    <h2>Plan a GregTech factory</h2>
+    <ol>
+      <li>Open the planner and add the machine you want to build towards, such as a Chemical Reactor making Gasoline or a Combustion Generator.</li>
+      <li>Set the rate you need on its output. Every machine connected upstream resizes to feed it.</li>
+      <li>Click an input to add a machine that makes it, or press <em>Auto Connect</em> to wire everything on the canvas together.</li>
+      <li>Press <em>Auto Ratio</em>, then read the totals: EU/t used, power generated, raw inputs and surplus.</li>
+    </ol>
+
+    <figure><img src="/guide/balances.webp" alt="The Balances panel listing raw inputs, outputs and byproducts of a GregTech line" loading="lazy" width="840" height="1712" style="max-width:420px" /><figcaption>Balances: what the line needs and what it makes.</figcaption></figure>
+
+    <h2>Share and explore</h2>
+    <p>Save flows in your browser or to an account, export them as a picture or a .json file, and share them on Community, where other players can vote, comment and copy them.</p>
+
+    <h2>Other modpacks</h2>
+    <p>Playing GT New Horizons? gtcalc has a <a href="/gtnh">GTNH calculator</a> with every GTNH 2.8 recipe. The <a href="/guide">guide</a> explains every part of the planner.</p>
+
+    <p><a class="cta" href="/?pack=base">Start planning</a></p>
+  </main>
+  <footer><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@gtcalc.app">support@gtcalc.app</a></footer>
+</body>
+</html>

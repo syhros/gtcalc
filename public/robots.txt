@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /__/
+Disallow: /api/
+
+Sitemap: https://gtcalc.app/sitemap.xml

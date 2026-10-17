@@ -1,0 +1,50 @@
+# Dependencies and builds
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+*.local
+*.log
+
+# Local secrets and environment (Firebase web config for development lives in .env.local)
+.env
+.env.*
+!.env.example
+brevo.txt
+.vercel/
+.firebase/
+
+# Modpack dumps used to generate the recipe data (large, and not ours to redistribute)
+references/
+
+# Promo video workspace (renders, audio and its own node_modules)
+promo/
+
+# Generated email previews
+scripts/email-preview/
+
+# Test files dropped into public while debugging
+public/__test*
+
+# Editor and assistant tooling
+.claude/
+.dual-graph/
+.serena/
+CLAUDE.md
+CLAUDE.md.backup-graperoot
+CONTEXT.md
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Leftovers from moving the app out of frontend/
+frontend/
+README.old.md
+gitignore.old
+
+# Private setup notes (account IDs, how services are wired)
+SETUP.md
+
+# Email design comparisons (built by emails/build.mjs and promo/email-variants.mjs)
+public/email/variants/

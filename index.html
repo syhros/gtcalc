@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gtcalc: GregTech Calculator &amp; Factory Planner (GTNH, GTCEu)</title>
+    <meta name="description" content="Free GregTech calculator and factory planner for GT New Horizons (GTNH) and GTCEu modpacks. Work out machine counts, ratios, voltage tiers, overclocks and EU/t, balance a whole production line in one click, and share it. No login." />
+    <link rel="canonical" href="https://gtcalc.app/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#11141c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="gtcalc" />
+    <meta property="og:title" content="gtcalc: GregTech calculator and factory planner (GTNH, GTCEu)" />
+    <meta property="og:description" content="Plan GregTech production lines for GTNH and GTCEu: machine counts, ratios, tiers and EU/t, balanced in one click. Free, no login required." />
+    <meta property="og:url" content="https://gtcalc.app/" />
+    <meta property="og:image" content="https://gtcalc.app/api/og" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="gtcalc: GregTech calculator and factory planner (GTNH, GTCEu)" />
+    <meta name="twitter:description" content="Plan GregTech production lines for GTNH and GTCEu: machine counts, ratios, tiers and EU/t, balanced in one click. Free, no login required." />
+    <meta name="twitter:image" content="https://gtcalc.app/api/og" />
+    <style>
+      /* The page background while the app loads, and the intro kept for search engines but not shown
+         (visitors without JavaScript get it via the noscript rule below). */
+      html, body { background: #11141c; margin: 0; }
+      .seo-intro { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    </style>
+    <noscript><style>.seo-intro { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; max-width: 720px; margin: 0 auto; padding: 48px 20px; color: #cbd5e1; font: 16px/1.6 system-ui, sans-serif; }</style></noscript>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "gtcalc",
+            "alternateName": ["GT Calc", "GT Calculator", "GregTech Calculator", "Greg Tech Calculator", "GregTech Planner", "GregTech Factory Planner", "GregTech Machine Planner", "GTNH Calculator", "GTNH Planner", "GTCEu Calculator", "GregTech Ratio Calculator"],
+            "url": "https://gtcalc.app/"
+          },
+          {
+            "@type": "WebApplication",
+            "name": "gtcalc",
+            "url": "https://gtcalc.app/",
+            "description": "Free GregTech production line calculator and factory planner for GT New Horizons (GTNH) and GTCEu Minecraft modpacks: machine counts, ratios, voltage tiers, overclocks and EU/t, with community flows to browse and share.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any (runs in the browser)",
+            "browserRequirements": "Requires JavaScript",
+            "inLanguage": "en",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+            "featureList": [
+              "Real recipes: GT New Horizons 2.8 (over 160,000), GTCEu and the Sky Greg modpack",
+              "Auto Ratio: picks tiers and machine counts for the whole line",
+              "Overclocking, parallel hatches and multiblocks",
+              "EU/t budget and power generation",
+              "Best Route planning down to raw resources",
+              "Share flows with the community, vote and comment"
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <!-- What search engines and no-JavaScript visitors see; the app replaces it when it starts. -->
+      <main class="seo-intro">
+        <h1>gtcalc: the GregTech calculator and factory planner</h1>
+        <p>gtcalc is a free GregTech calculator (or "Greg Tech" / GT calculator) and factory planner for GT New Horizons (GTNH) and GTCEu Minecraft modpacks. Plan GregTech production lines in your browser. Drop in machines, link their inputs and outputs, and gtcalc works out how many of each machine you need, which voltage tier to run them at, and how much EU/t the line draws.</p>
+        <ul>
+          <li>Real recipes: every GT New Horizons 2.8 recipe, GTCEu, and the Sky Greg modpack</li>
+          <li>Auto Ratio balances every machine in one click, within your EU/t budget</li>
+          <li>Overclocks, parallel hatches, multiblocks and generators</li>
+          <li>Best Route plans a chain all the way down to raw resources</li>
+          <li>Share flows with the community, browse others' builds, vote and comment</li>
+        </ul>
+        <p>More: <a href="/gtnh" style="color:#22d3ee">GTNH calculator</a> · <a href="/gtceu" style="color:#22d3ee">GTCEu calculator</a> · <a href="/guide" style="color:#22d3ee">How to plan a GregTech line</a></p>
+        <p>Free, and no login required. <a href="/privacy" style="color:#22d3ee">Privacy</a> · <a href="/terms" style="color:#22d3ee">Terms</a></p>
+        <noscript><p style="color:#fcd34d">gtcalc needs JavaScript to run. Please turn it on to use the calculator.</p></noscript>
+      </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "gtcalc: GregTech calculator and planner",
+  "short_name": "gtcalc",
+  "description": "Plan GregTech production lines for GTNH and GTCEu: machine counts, ratios, tiers and EU/t.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#11141c",
+  "theme_color": "#11141c",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

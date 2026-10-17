@@ -1,0 +1,38 @@
+{
+  "name": "gtcalc",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "import-recipes": "node scripts/import-recipes.mjs && node scripts/import-recipes.mjs --profile base"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/og": "^0.8.6",
+    "@vercel/speed-insights": "^2.0.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^1.49.0",
+    "nodemailer": "^7.0.13",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  }
+}

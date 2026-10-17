@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to Plan a GregTech Production Line: Guide · gtcalc</title>
+  <meta name="description" content="How to use gtcalc, the GregTech calculator and factory planner: add machines, set rates, link suppliers, overclocking, parallel hatches, generators, Auto Ratio and Best Route, for GTNH and GTCEu." />
+  <link rel="canonical" href="https://gtcalc.app/guide" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="gtcalc" />
+  <meta property="og:title" content="How to plan a GregTech production line · gtcalc guide" />
+  <meta property="og:description" content="Add machines, set rates, link suppliers, overclock, fit parallel hatches and balance the line with Auto Ratio. For GTNH and GTCEu." />
+  <meta property="og:url" content="https://gtcalc.app/guide" />
+  <meta property="og:image" content="https://gtcalc.app/api/og" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="/legal.css" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to plan a GregTech production line with gtcalc",
+      "description": "Plan machine counts, tiers and EU/t for a GregTech (GTNH or GTCEu) production line.",
+      "tool": [{ "@type": "HowToTool", "name": "gtcalc (gtcalc.app)" }],
+      "step": [
+        { "@type": "HowToStep", "name": "Pick the modpack", "text": "Choose GregTech (GTCEu), Sky Greg or GT New Horizons from the menu at the top left." },
+        { "@type": "HowToStep", "name": "Add the target machine", "text": "Press Add a new node and search for what you want to make. The first machine becomes the target." },
+        { "@type": "HowToStep", "name": "Set the rate", "text": "Click the target's output number and type the rate you need, such as 2B or 20k." },
+        { "@type": "HowToStep", "name": "Add suppliers", "text": "Click an input to add a machine that makes it, or use Best Route to plan down to raw resources." },
+        { "@type": "HowToStep", "name": "Balance it", "text": "Press Auto Ratio to choose tiers for every machine within your EU/t budget." }
+      ]
+    }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="/">Open the planner &rsaquo;</a>
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" />gtcalc</a>
+    <nav><a href="/gtnh">GTNH</a><a href="/gtceu">GTCEu</a><a href="/guide" aria-current="page">Guide</a></nav>
+  </header>
+  <main>
+    <h1>How to plan a GregTech production line</h1>
+    <p class="updated">A guide to gtcalc, the GregTech calculator and factory planner</p>
+
+    <p>gtcalc works backwards from one machine, the <strong>target</strong>. You say how much it should make, and every machine connected upstream resizes to feed it. This page covers the basics; the full guide is inside the planner (the book button in the header).</p>
+
+    <h2>1. Pick the modpack</h2>
+    <p>Choose <a href="/gtceu">GregTech (GTCEu)</a>, Sky Greg or <a href="/gtnh">GT New Horizons</a> from the menu at the top left. Each pack keeps its own recipes, canvas and saved flows. In GTNH, items that share a name (Iron Ore on a dozen stones and planets) show as one search result with a type picker.</p>
+
+    <h2>2. Add the machine you want</h2>
+    <p>Press <em>Add a new node</em> (or right-click the canvas) and search by item, by machine, or across all recipes. The first machine you add becomes the target. Click its output number and type a rate, such as <code>2B</code>, <code>500</code> or <code>20k</code>, per second or per minute.</p>
+    <figure><img src="/guide/output-node.webp" alt="An Output node for Nitric Acid with its Best route button" loading="lazy" width="640" height="368" style="max-width:420px" /><figcaption>An Output node: set the rate you need, then let Best Route plan the rest.</figcaption></figure>
+
+    <h2>3. Link the suppliers</h2>
+    <p>Click an input on a card to find machines that make it, or drag from an input onto another card. <em>Auto Connect</em> wires every input to every machine on the canvas that makes it. <em>Best Route</em> goes further and plans the whole chain down to raw resources. Anything nothing supplies is a raw input, listed in the side panel under <em>Balances</em>.</p>
+
+    <h2>4. Tiers and overclocking</h2>
+    <p>The coloured badge on each card is its voltage tier: left-click steps up, right-click steps down. Each tier above a recipe's base tier halves the craft time and multiplies the EU/t by 4, so the energy per craft doubles. That is why base tier is the most efficient and higher tiers save machines.</p>
+
+    <h2>5. Multiblocks and parallel hatches</h2>
+    <p>Many recipes can run in a larger multiblock instead. Pick it in the dropdown on the card, and choose a parallel control hatch where the machine takes one. A hatch runs that many crafts at once for that many times the EU/t; power left over at the energy hatch's tier overclocks the combined recipe.</p>
+
+    <h2>6. Generators and power</h2>
+    <p>Generators, large combustion and extreme engines, large turbines (with rotors and holder tiers) and large boilers show their fuel use and EU/t or steam. The energy box shows the budget, what the line uses, what generators make, and the net.</p>
+
+    <h2>7. Balance it with Auto Ratio</h2>
+    <p><em>Auto Ratio</em> picks every machine's tier in one click: <strong>Max Efficiency</strong> keeps everything at base tier, <strong>Min Machines</strong> takes the upgrades that save the most machines per extra EU/t until the budget is used, and <strong>Balanced</strong> stops at a third of that power. Lock a card to keep machines you have already built.</p>
+    <figure><img src="/guide/auto-ratio.webp" alt="Before and after Auto Ratio: one Centrifuge limits an ammonia line; after Auto Ratio six Centrifuges feed the Chemical Reactors" loading="lazy" width="2000" height="1243" /><figcaption>Before: one Centrifuge holds the line back. After Auto Ratio: six, and every machine is balanced.</figcaption></figure>
+    <figure><img src="/guide/balances.webp" alt="The Balances panel with raw inputs, outputs and byproducts" loading="lazy" width="840" height="1712" style="max-width:420px" /><figcaption>Balances: raw inputs, outputs and byproducts of the line.</figcaption></figure>
+
+    <h2>How the numbers work</h2>
+    <p>Recipe amounts are per craft; cards show per second (amount ÷ craft time × machines). The whole canvas is solved at once: every connected input is fully supplied, no machine sends out more than it makes, the target runs at your rate, and among all the ways to do that the cheapest wins. Byproducts and spare outputs are used before any machine runs harder, and chanced outputs count at their chance.</p>
+
+    <h2>Save and share</h2>
+    <p>Flows save in your browser, or to your account on any device. Export a flow as an image or a .json file, or share it on Community where other players can vote, comment and make their own copy.</p>
+
+    <p><a class="cta" href="/">Open the planner</a></p>
+  </main>
+  <footer><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@gtcalc.app">support@gtcalc.app</a></footer>
+</body>
+</html>

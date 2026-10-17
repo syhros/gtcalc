@@ -1,0 +1,178 @@
+{
+ "_source": "GregTech CEu Modern v7.5.3 material definitions (.rotorStats(power, efficiency, damage, durability))",
+ "aluminium": {
+  "power": 100,
+  "efficiency": 140,
+  "durability": 128
+ },
+ "chromium": {
+  "power": 130,
+  "efficiency": 155,
+  "durability": 512
+ },
+ "iridium": {
+  "power": 130,
+  "efficiency": 115,
+  "durability": 2560
+ },
+ "iron": {
+  "power": 115,
+  "efficiency": 115,
+  "durability": 256
+ },
+ "manganese": {
+  "power": 100,
+  "efficiency": 115,
+  "durability": 512
+ },
+ "molybdenum": {
+  "power": 100,
+  "efficiency": 115,
+  "durability": 512
+ },
+ "neodymium": {
+  "power": 100,
+  "efficiency": 115,
+  "durability": 512
+ },
+ "osmium": {
+  "power": 160,
+  "efficiency": 185,
+  "durability": 1280
+ },
+ "titanium": {
+  "power": 130,
+  "efficiency": 115,
+  "durability": 1600
+ },
+ "tungsten": {
+  "power": 130,
+  "efficiency": 115,
+  "durability": 2560
+ },
+ "naquadah": {
+  "power": 160,
+  "efficiency": 105,
+  "durability": 1280
+ },
+ "neutronium": {
+  "power": 400,
+  "efficiency": 250,
+  "durability": 655360
+ },
+ "tritanium": {
+  "power": 220,
+  "efficiency": 220,
+  "durability": 10240
+ },
+ "brass": {
+  "power": 130,
+  "efficiency": 120,
+  "durability": 152
+ },
+ "bronze": {
+  "power": 115,
+  "efficiency": 105,
+  "durability": 192
+ },
+ "invar": {
+  "power": 130,
+  "efficiency": 115,
+  "durability": 512
+ },
+ "magnalium": {
+  "power": 100,
+  "efficiency": 105,
+  "durability": 256
+ },
+ "sterling_silver": {
+  "power": 100,
+  "efficiency": 160,
+  "durability": 196
+ },
+ "rose_gold": {
+  "power": 100,
+  "efficiency": 170,
+  "durability": 152
+ },
+ "black_bronze": {
+  "power": 100,
+  "efficiency": 155,
+  "durability": 256
+ },
+ "bismuth_bronze": {
+  "power": 130,
+  "efficiency": 120,
+  "durability": 256
+ },
+ "stainless_steel": {
+  "power": 160,
+  "efficiency": 115,
+  "durability": 480
+ },
+ "steel": {
+  "power": 130,
+  "efficiency": 105,
+  "durability": 512
+ },
+ "ultimet": {
+  "power": 160,
+  "efficiency": 130,
+  "durability": 2048
+ },
+ "wrought_iron": {
+  "power": 145,
+  "efficiency": 105,
+  "durability": 384
+ },
+ "osmiridium": {
+  "power": 130,
+  "efficiency": 130,
+  "durability": 3152
+ },
+ "tungsten_carbide": {
+  "power": 160,
+  "efficiency": 155,
+  "durability": 1280
+ },
+ "hssg": {
+  "power": 205,
+  "efficiency": 140,
+  "durability": 4000
+ },
+ "hsse": {
+  "power": 280,
+  "efficiency": 140,
+  "durability": 5120
+ },
+ "hsss": {
+  "power": 250,
+  "efficiency": 180,
+  "durability": 3000
+ },
+ "tungsten_steel": {
+  "power": 160,
+  "efficiency": 120,
+  "durability": 2560
+ },
+ "cobalt_brass": {
+  "power": 100,
+  "efficiency": 120,
+  "durability": 256
+ },
+ "vanadium_steel": {
+  "power": 130,
+  "efficiency": 115,
+  "durability": 1920
+ },
+ "naquadah_alloy": {
+  "power": 190,
+  "efficiency": 120,
+  "durability": 5120
+ },
+ "rhodium_plated_palladium": {
+  "power": 130,
+  "efficiency": 155,
+  "durability": 1024
+ }
+}

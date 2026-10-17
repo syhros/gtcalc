@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&family=JetBrains+Mono:wght@400;600;700&display=swap');
+/* Only the app code has class names: skip public/ (the GTNH recipe file alone is 47 MB). */
+@import "tailwindcss" source(".");
+
+@layer base {
+  body {
+    background-color: #12151b;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', 'VT323', monospace;
+    user-select: none;
+    overflow: clip;
+  }
+}
+
+/* Sharp pixel font styling */
+.font-pixel {
+  font-family: 'VT323', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* Guide: animated "drag an output onto an input" demo (4 s loop). */
+.demo-cursor { animation: demoCursor 4s ease-in-out infinite; }
+.demo-drag { stroke-dasharray: 6 5; animation: demoDrag 4s ease-in-out infinite; }
+.demo-wire { animation: demoWire 4s ease-in-out infinite; }
+.demo-press { animation: demoPress 4s ease-in-out infinite; }
+@keyframes demoCursor {
+  0%, 10% { transform: translate(0, 0); opacity: 0; }
+  14% { transform: translate(0, 0); opacity: 1; }
+  58% { transform: translate(var(--demo-dx), 0); opacity: 1; }
+  80% { transform: translate(var(--demo-dx), 0); opacity: 1; }
+  92%, 100% { transform: translate(var(--demo-dx), 0); opacity: 0; }
+}
+@keyframes demoDrag {
+  0%, 14% { opacity: 0; stroke-dashoffset: 0; clip-path: inset(0 100% 0 0); }
+  15% { opacity: 1; clip-path: inset(0 100% 0 0); }
+  58% { opacity: 1; clip-path: inset(0 0 0 0); }
+  62%, 100% { opacity: 0; clip-path: inset(0 0 0 0); }
+}
+@keyframes demoWire {
+  0%, 60% { opacity: 0; }
+  66%, 90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes demoPress {
+  0%, 12% { transform: scale(1); }
+  15%, 58% { transform: scale(0.85); }
+  62%, 100% { transform: scale(1); }
+}
+
+/* Header "Aa" toggle: the title's pixel font for the whole app. */
+.pixel-font-all,
+.pixel-font-all * {
+  font-family: 'Silkscreen', monospace;
+  letter-spacing: 0.01em;
+}
+
+.font-pixel-bold {
+  font-family: 'Silkscreen', monospace;
+  letter-spacing: 0.02em;
+}
+
+/* Blueprint dot-grid background */
+.blueprint-grid {
+  background-color: #12161f;
+  background-image: 
+    radial-gradient(circle, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.6px);
+  background-size: 26px 26px;
+}
+
+/* Flow along wires: one dashed stroke per wire, moved with a cheap dash-offset animation
+   (replaces per-wire SVG motion paths, which got slow with many connections). */
+.wire-flow {
+  stroke-dasharray: 3 15;
+  opacity: 0.9;
+}
+/* Static by default so wires only repaint when something changes. Animated when the
+   "Flow" toggle is on, or on the wires lit by hovering a node/wire. */
+.flow-anim .wire-flow,
+.wire-flow.lit {
+  animation: wireFlow 1.1s steps(22) infinite; /* 20 steps a second: smooth enough, a third of the repaints */
+}
+@keyframes wireFlow {
+  to { stroke-dashoffset: -18; }
+}
+/* While panning/dragging, hold the dashes still. */
+.wire-flow.off,
+.wires-still .wire-flow {
+  animation: none;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #141822;
+}
+::-webkit-scrollbar-thumb {
+  background: #283347;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b4963;
+}
+
+/* Minecraft textures: keep pixels crisp when scaled */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Click-to-edit values: plain text that hints it can be changed */
+.editable-value {
+  cursor: text;
+  padding: 0 3px;
+  border-bottom: 1px dashed transparent;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.editable-value:hover {
+  border-bottom-color: currentColor;
+  background-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px -5px currentColor;
+}
+
+/* No native spinners on number fields (the app has its own buttons) */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Wire being dragged from a port */
+@keyframes linkDash {
+  to { stroke-dashoffset: -16; }
+}
+.link-preview {
+  animation: linkDash 0.6s linear infinite;
+}
+
+/* "Go to" highlight: a glowing ring that pulses round a machine card */
+@keyframes nodePulse {
+  0% { opacity: 0; transform: scale(1.06); box-shadow: 0 0 0 0 rgba(253, 224, 71, 0.9); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); box-shadow: 0 0 28px 14px rgba(253, 224, 71, 0); }
+}
+.node-pulse {
+  position: absolute;
+  inset: -9px;
+  border: 3px solid #fde047;
+  pointer-events: none;
+  animation: nodePulse 0.85s ease-out 3;
+  z-index: 5;
+}
+
+/* Builds page: a build or profile slides in when opened. */
+@keyframes buildEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.build-enter { animation: buildEnter 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .build-enter { animation: none; } }
+
+/* Toast: rises in with a small overshoot. translateX keeps it centred (it's left: 50%). */
+@keyframes toastIn {
+  0% { opacity: 0; transform: translate(-50%, 18px) scale(0.96); }
+  70% { opacity: 1; transform: translate(-50%, -3px) scale(1.01); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.toast-in { transform: translateX(-50%); animation: toastIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }
+
+/* Side panel slides in at the same pace the energy box and flow name move aside. */
+@keyframes panelIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.panel-in { animation: panelIn 0.2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .panel-in { animation: none; } }
+
+/* View mode: the energy box shows the budget but can't change it. */
+[data-readonly] .editable-value { pointer-events: none; }
+
+/* Phones (and view mode) only look at flows: touches on cards and badges pan the canvas instead of editing. */
+.view-only [data-node], .view-only [data-node] *, .view-only [data-badge], .view-only [data-badge] * { pointer-events: none !important; }
+
+/* Bottom toolbar "Flow" button: a small arrow sliding along while wire animation is on. */
+.flow-arrow { animation: flow-arrow 1.2s linear infinite; }
+@keyframes flow-arrow {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(110%); }
+}
+@media (prefers-reduced-motion: reduce) { .flow-arrow { animation: none; } }
+
+/* Image export detail levels (see the export panel): basic drops each card's footer and machine
+   choices, simple keeps only the header and the inputs/outputs. */
+.export-basic [data-detail="footer"], .export-basic [data-detail="extra"],
+.export-simple [data-detail="footer"], .export-simple [data-detail="extra"], .export-simple [data-detail="controls"] { display: none !important; }

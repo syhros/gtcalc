@@ -1,0 +1,19 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/auth/action", "destination": "/" },
+    { "source": "/__/auth/:path*", "destination": "https://greg-calc.firebaseapp.com/__/auth/:path*" },
+    { "source": "/__/firebase/:path*", "destination": "https://greg-calc.firebaseapp.com/__/firebase/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/data/(recipes|recipes-base|recipes-gtnh|recipes-gtnh-[0-9]+).json",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}
