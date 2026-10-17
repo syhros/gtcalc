@@ -55,4 +55,4 @@ gtcalc is a free, fan-made tool and isn't affiliated with Mojang, Microsoft or t
 
 ## License
 
-gtcalc's own code is MIT licensed, copyright (c) 2026 syhros. See [LICENSE](LICENSE). The MIT licence does not cover the recipe data, textures and icons: they are third-party content under their owners' licences (see above and LICENSE).
+gtcalc's own code is MIT licensed, copyright (c) 2026 syhros. See [LICENSE](LICENSE). The MIT licence does not cover the recipe data, textures and icons: they are third-party content under their owners' licences (see above and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).
