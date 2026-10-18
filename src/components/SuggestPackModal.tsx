@@ -94,7 +94,7 @@ export function SuggestPackModal({ loggedIn, onLogin, onClose, onDone }: { logge
                     onClick={() => setPicked({ name: h.name, url: h.url, source: h.source })}
                     className={`w-full flex items-center gap-2 p-1.5 border text-left ${on ? 'border-cyan-400 bg-cyan-950/60' : 'border-[#2b3548] hover:bg-[#202737]'}`}
                   >
-                    {h.icon ? <img src={h.icon} alt="" className="w-8 h-8 flex-shrink-0 bg-[#12151e]" /> : <span className="w-8 h-8 flex-shrink-0 bg-[#12151e]" />}
+                    {h.icon && /^https:\/\//i.test(h.icon) ? <img src={h.icon} alt="" referrerPolicy="no-referrer" className="w-8 h-8 flex-shrink-0 bg-[#12151e]" /> : <span className="w-8 h-8 flex-shrink-0 bg-[#12151e]" />}
                     <span className="min-w-0 flex-1">
                       <span className="block font-bold text-slate-100 truncate">{h.name}</span>
                       <span className="block text-[10px] text-slate-500 truncate">{h.summary}</span>

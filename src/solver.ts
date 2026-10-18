@@ -95,6 +95,13 @@ export function perCycle(item: RecipeItem, stats: MachineStats): number {
   return item.amount * (item.chance ?? 1) * (item.fixed ? 1 : stats.parallel);
 }
 
+/** Per cycle of one item id, summed: some recipes list the same item twice (dust x1 plus dust x1 at 14%). */
+export function perCycleOf(items: RecipeItem[], itemId: string, stats: MachineStats): number {
+  let total = 0;
+  for (const i of items) if (i.id === itemId) total += perCycle(i, stats);
+  return total;
+}
+
 /**
  * The node's inputs: the recipe's own plus anything the chosen machine burns on top
  * (large engines: lubricant 1 mB / 72 ticks, oxygen boost per tick while boosted).
@@ -142,67 +149,76 @@ const EPS = 1e-9;
 const PIVOT_TOL = 1e-9; // smallest usable pivot, relative (rows are scaled to a largest coefficient of 1)
 
 /**
- * Dense primal simplex (minimise c·x subject to rows, x >= 0). Every row must come with a
+ * Dense primal simplex (minimise cost·x subject to rows, x >= 0). Every row must come with a
  * starting basic variable that has coefficient +1 in that row only (a slack or shortfall
  * variable) and a non-negative right-hand side, so no phase 1 is needed.
+ *
+ * The objectives are minimised in order: each later one only over the solutions that keep the
+ * earlier ones at their minimum. A column whose reduced cost is positive at an earlier optimum
+ * would make that objective worse, so it never enters again.
  */
-function simplexMin(A: Float64Array[], b: number[], c: number[], basis: number[], maxIter = 20000): number[] {
+function simplexMin(A: Float64Array[], b: number[], costs: number[][], basis: number[], maxIter = 20000): number[] {
   const m = A.length;
-  const n = c.length;
+  const n = costs[0].length;
   const T = A.map((row, i) => {
     const r = new Float64Array(n + 1);
     r.set(row);
     r[n] = b[i];
     return r;
   });
-  // Reduced costs: c_j - c_B · column j (the starting basis is an identity).
-  const z = new Float64Array(n + 1);
-  for (let j = 0; j <= n; j++) {
-    let v = j < n ? c[j] : 0;
-    for (let i = 0; i < m; i++) v -= c[basis[i]] * T[i][j];
-    z[j] = v;
-  }
-  let degenerate = 0;
-  for (let iter = 0; iter < maxIter; iter++) {
-    // Entering column: most negative reduced cost (Bland's rule after many degenerate steps).
-    let enter = -1;
-    let best = -1e-12;
-    for (let j = 0; j < n; j++) {
-      if (z[j] < best) {
-        enter = j;
-        if (degenerate > 50) break; // Bland: first improving column
-        best = z[j];
-      }
+  const frozen = new Uint8Array(n);
+  for (const c of costs) {
+    const cMax = Math.max(1, ...c.map(Math.abs));
+    // Reduced costs for the current basis: c_j - c_B · column j.
+    const z = new Float64Array(n + 1);
+    for (let j = 0; j <= n; j++) {
+      let v = j < n ? c[j] : 0;
+      for (let i = 0; i < m; i++) v -= c[basis[i]] * T[i][j];
+      z[j] = v;
     }
-    if (enter < 0) break;
-    // Leaving row: minimum ratio, ties to the smallest basis index.
-    let leave = -1;
-    let ratio = Infinity;
-    for (let i = 0; i < m; i++) {
-      const a = T[i][enter];
-      if (a > PIVOT_TOL) { // ignore near-zero entries: pivoting on them blows the numbers up
-        const r = T[i][n] / a;
-        if (r < ratio - 1e-12 || (Math.abs(r - ratio) <= 1e-12 && leave >= 0 && basis[i] < basis[leave])) {
-          ratio = r;
-          leave = i;
+    let degenerate = 0;
+    for (let iter = 0; iter < maxIter; iter++) {
+      // Entering column: most negative reduced cost (Bland's rule after many degenerate steps).
+      let enter = -1;
+      let best = -1e-12 * cMax;
+      for (let j = 0; j < n; j++) {
+        if (!frozen[j] && z[j] < best) {
+          enter = j;
+          if (degenerate > 50) break; // Bland: first improving column
+          best = z[j];
         }
       }
+      if (enter < 0) break;
+      // Leaving row: minimum ratio, ties to the smallest basis index.
+      let leave = -1;
+      let ratio = Infinity;
+      for (let i = 0; i < m; i++) {
+        const a = T[i][enter];
+        if (a > PIVOT_TOL) { // ignore near-zero entries: pivoting on them blows the numbers up
+          const r = T[i][n] / a;
+          if (r < ratio - 1e-12 || (Math.abs(r - ratio) <= 1e-12 && leave >= 0 && basis[i] < basis[leave])) {
+            ratio = r;
+            leave = i;
+          }
+        }
+      }
+      if (leave < 0) break; // unbounded (cannot happen: every cost is >= 0)
+      degenerate = ratio <= 1e-12 ? degenerate + 1 : 0;
+      const pr = T[leave];
+      const pv = pr[enter];
+      for (let j = 0; j <= n; j++) pr[j] /= pv;
+      for (let i = 0; i < m; i++) {
+        if (i === leave) continue;
+        const f = T[i][enter];
+        if (f === 0) continue;
+        const row = T[i];
+        for (let j = 0; j <= n; j++) row[j] -= f * pr[j];
+      }
+      const fz = z[enter];
+      for (let j = 0; j <= n; j++) z[j] -= fz * pr[j];
+      basis[leave] = enter;
     }
-    if (leave < 0) break; // unbounded (cannot happen: every cost is >= 0)
-    degenerate = ratio <= 1e-12 ? degenerate + 1 : 0;
-    const pr = T[leave];
-    const pv = pr[enter];
-    for (let j = 0; j <= n; j++) pr[j] /= pv;
-    for (let i = 0; i < m; i++) {
-      if (i === leave) continue;
-      const f = T[i][enter];
-      if (f === 0) continue;
-      const row = T[i];
-      for (let j = 0; j <= n; j++) row[j] -= f * pr[j];
-    }
-    const fz = z[enter];
-    for (let j = 0; j <= n; j++) z[j] -= fz * pr[j];
-    basis[leave] = enter;
+    for (let j = 0; j < n; j++) if (z[j] > 1e-9 * cMax) frozen[j] = 1;
   }
   const x = new Array(n).fill(0);
   for (let i = 0; i < m; i++) x[basis[i]] = Math.max(0, T[i][n]);
@@ -230,14 +246,8 @@ export function solveFlows(
   const stats = new Map(nodes.map((n) => [n.instanceId, machineStats(n)]));
   const inputsOf = new Map(nodes.map((n) => [n.instanceId, nodeInputs(n, stats.get(n.instanceId)!)]));
   const byId = new Map(nodes.map((n) => [n.instanceId, n]));
-  const outPer = (n: CanvasNode, itemId: string) => {
-    const out = n.recipe.outputs.find((o) => o.id === itemId);
-    return out ? perCycle(out, stats.get(n.instanceId)!) : 0;
-  };
-  const inPer = (n: CanvasNode, itemId: string) => {
-    const inp = inputsOf.get(n.instanceId)!.find((i) => i.id === itemId);
-    return inp ? perCycle(inp, stats.get(n.instanceId)!) : 0;
-  };
+  const outPer = (n: CanvasNode, itemId: string) => perCycleOf(n.recipe.outputs, itemId, stats.get(n.instanceId)!);
+  const inPer = (n: CanvasNode, itemId: string) => perCycleOf(inputsOf.get(n.instanceId)!, itemId, stats.get(n.instanceId)!);
   const conns = connections.filter((c) => {
     const s = byId.get(c.sourceInstanceId);
     const t = byId.get(c.targetInstanceId);
@@ -262,8 +272,7 @@ export function solveFlows(
       return n.targetEUt / s.eutPerMachine / s.durationSec;
     }
     if (n.isTarget && n.targetRate) {
-      const out = n.recipe.outputs.find((o) => o.id === n.targetRate!.itemId);
-      const per = out ? perCycle(out, s) : 0;
+      const per = perCycleOf(n.recipe.outputs, n.targetRate.itemId, s);
       if (per > 0) return n.targetRate.perSec / per;
     }
     if (n.recipe.kind === 'supply' || n.recipe.kind === 'output') return n.supplyLimit ?? 0;
@@ -330,23 +339,32 @@ export function solveFlows(
     rows.push({ coef: new Map([[xVar.get(n.instanceId)!, 1]]), rhs: cap, basic: 'slack' });
   }
 
-  // Scale each row so its largest coefficient is 1. Recipe amounts range from fractions of a mB
-  // to millions per craft; unscaled, the simplex can pivot on rounding noise and return absurd
-  // numbers. A shortfall variable is rescaled with its row (short' = short / scale), so it keeps
-  // coefficient 1 and still works as that row's starting basis.
-  const rowScale = rows.map((r) => {
-    let max = 0;
-    for (const [j, v] of r.coef) if (r.basic !== j) max = Math.max(max, Math.abs(v));
-    return max > 0 ? max : 1;
-  });
+  // Scale rows and columns towards a largest coefficient of 1. Recipe amounts range from
+  // fractions of a mB to 1e8 mB per craft; unscaled, the simplex's tolerances either pivot on
+  // rounding noise or miss real entries. Rows and columns are scaled in turn, ending with rows
+  // (so PIVOT_TOL stays relative). A shortfall variable is rescaled with its row (short' = short
+  // / scale), so it keeps coefficient 1 and still works as that row's starting basis; machine and
+  // link columns are rescaled as y = x * colScale.
   const shortScale = new Map<number, number>();
-  rows.forEach((r, i) => {
-    const k = rowScale[i];
-    if (k === 1) return;
-    for (const [j, v] of r.coef) r.coef.set(j, r.basic === j ? 1 : v / k);
-    r.rhs /= k;
-    if (typeof r.basic === 'number') shortScale.set(r.basic, k);
-  });
+  const colScale = new Map<number, number>();
+  for (let pass = 0; ; pass++) {
+    for (const r of rows) {
+      let k = 0;
+      for (const [j, v] of r.coef) if (r.basic !== j) k = Math.max(k, Math.abs(v));
+      if (k === 0 || k === 1) continue;
+      for (const [j, v] of r.coef) r.coef.set(j, r.basic === j ? 1 : v / k);
+      r.rhs /= k;
+      if (typeof r.basic === 'number') shortScale.set(r.basic, (shortScale.get(r.basic) ?? 1) * k);
+    }
+    if (pass === 3) break;
+    const colMax = new Map<number, number>();
+    for (const r of rows) for (const [j, v] of r.coef) if (r.basic !== j) colMax.set(j, Math.max(colMax.get(j) ?? 0, Math.abs(v)));
+    for (const [j, k] of colMax) {
+      if (k === 0 || k === 1) continue;
+      for (const r of rows) { const v = r.coef.get(j); if (v != null) r.coef.set(j, v / k); }
+      colScale.set(j, (colScale.get(j) ?? 1) * k);
+    }
+  }
 
   // Slack variables, then the dense matrix.
   const basis: number[] = [];
@@ -361,8 +379,12 @@ export function solveFlows(
     return row;
   });
 
-  // Costs (normalised): running a machine ~ average EU/t + a little per machine; Input nodes
-  // nearly free; flows a hair above zero so nothing circulates pointlessly; shortfall huge.
+  // Costs, minimised in order: first any shortfall (so an input is only left short when nothing
+  // can supply it, however costly the supply), then running cost: a machine ~ average EU/t + a
+  // little per machine, Input nodes nearly free, flows a hair above zero so nothing circulates
+  // pointlessly. Costs follow the column scaling (cost of y = cost of x / colScale).
+  const shortCost = new Array(nv).fill(0);
+  for (const j of shortVar.values()) shortCost[j] = 1;
   const c = new Array(nv).fill(0);
   const weight = (n: CanvasNode) => {
     if (n.recipe.kind === 'supply' || n.recipe.kind === 'output') return 1e-6;
@@ -372,34 +394,41 @@ export function solveFlows(
   const maxW = Math.max(1, ...[...xVar.keys()].map((id) => weight(byId.get(id)!)));
   for (const [id, j] of xVar) c[j] = weight(byId.get(id)!) / maxW;
   for (const j of fVar.values()) c[j] = 1e-9;
-  for (const j of shortVar.values()) c[j] = 1e4;
+  for (const j of shortVar.values()) c[j] = 1;
+  for (const [j, k] of colScale) c[j] /= k;
 
-  const sol = rows.length ? simplexMin(A, rows.map((r) => r.rhs), c, basis) : new Array(nv).fill(0);
+  const y = rows.length ? simplexMin(A, rows.map((r) => r.rhs), [shortCost, c], basis) : new Array(nv).fill(0);
+
+  // Check the answer against the scaled rows: a large miss means the solve went wrong.
+  let worst = 0;
+  const rowSize: number[] = []; // largest term in each row, for snapping below
+  rows.forEach((r) => {
+    let lhs = 0;
+    let size = Math.abs(r.rhs);
+    for (const [j, v] of r.coef) { lhs += v * y[j]; size = Math.max(size, Math.abs(v * y[j])); }
+    rowSize.push(size);
+    const miss = r.basic === 'slack' ? lhs - r.rhs : Math.abs(lhs - r.rhs); // slack rows are <=
+    worst = Math.max(worst, miss / (1 + Math.abs(r.rhs)));
+  });
+  const unstable = worst > 1e-6;
+
+  // Snap numerical dust to a clean 0: a value whose term is negligible next to the largest term
+  // in every row it appears in. (Measured per row, so a 1/s link next to a 1e9 mB/s chain stays.)
+  const termShare = new Map<number, number>();
+  rows.forEach((r, i) => {
+    for (const [j, v] of r.coef) termShare.set(j, Math.max(termShare.get(j) ?? 0, rowSize[i] > 0 ? Math.abs(v * y[j]) / rowSize[i] : 0));
+  });
+  const shortIds = new Set(shortVar.values());
+  for (const [j, share] of termShare) if (share < (shortIds.has(j) ? 1e-7 : 1e-9)) y[j] = 0;
 
   // ---------------------------------------------------------------- read the solution
+  const sol = y.map((v, j) => v / (colScale.get(j) ?? 1));
   const cycles = new Map<string, number>();
   for (const n of nodes) cycles.set(n.instanceId, fixed.get(n.instanceId) ?? sol[xVar.get(n.instanceId)!] ?? 0);
   const alloc = new Map<string, number>();
   for (const cn of conns) alloc.set(cn.id, sol[fVar.get(cn.id)!] ?? 0);
   const shortfall = new Map<string, number>();
   for (const [k, j] of shortVar) if (sol[j] > 0) shortfall.set(k, sol[j] * (shortScale.get(j) ?? 1));
-
-  // Check the answer against the scaled rows: a large miss means the solve went wrong.
-  let worst = 0;
-  rows.forEach((r) => {
-    let lhs = 0;
-    for (const [j, v] of r.coef) lhs += v * sol[j];
-    const miss = r.basic === 'slack' ? lhs - r.rhs : Math.abs(lhs - r.rhs); // slack rows are <=
-    worst = Math.max(worst, miss / (1 + Math.abs(r.rhs)));
-  });
-  const unstable = worst > 1e-6;
-
-  // Snap numerical dust to a clean 0.
-  const maxCycles = Math.max(0, ...cycles.values());
-  for (const [id, v] of cycles) if (!fixed.has(id) && v < maxCycles * 1e-9) cycles.set(id, 0);
-  const maxAlloc = Math.max(0, ...alloc.values(), ...shortfall.values());
-  for (const [id, v] of alloc) if (v < maxAlloc * 1e-9) alloc.set(id, 0);
-  for (const [k, v] of shortfall) if (v < maxAlloc * 1e-7) shortfall.delete(k);
   const anyShort = shortfall.size > 0;
 
   const groupDemand = (k: string) => {

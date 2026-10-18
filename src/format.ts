@@ -33,22 +33,27 @@ const trim = (n: number, digits: number) => {
   return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
 };
 
-/** Compact number: 1234 -> 1.23k, 2500000 -> 2.5M. */
+// Always the shortest form from 1,000 up: 1.82k, 436k, 2.15G. GTCEu stores EU/t as a long, so
+// nothing goes past E (9.22E is the largest possible value).
+const SCALES: [number, string][] = [[1, ''], [1e3, 'k'], [1e6, 'M'], [1e9, 'G'], [1e12, 'T'], [1e15, 'P'], [1e18, 'E']];
+
+/** Compact number: 1234 -> 1.23k, 2500000 -> 2.5M, 999999 -> 1M. */
 export function compact(n: number): string {
   const a = Math.abs(n);
-  // Always the shortest form from 1,000 up: 1.82k, 436k, 2.15G. GTCEu stores EU/t as a
-  // long, so nothing goes past E (9.22E is the largest possible value).
-  const units: [number, string][] = [[1e18, 'E'], [1e15, 'P'], [1e12, 'T'], [1e9, 'G'], [1e6, 'M'], [1e3, 'k']];
-  for (const [v, s] of units) {
-    if (a >= v) {
-      const x = n / v;
-      return `${trim(x, Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : 2)}${s}`;
-    }
+  if (a < 10) {
+    if (a >= 0.01 || a === 0) return trim(n, 2);
+    return trim(n, Math.min(20, 1 - Math.floor(Math.log10(a)))); // two significant digits, no "1e-7"
   }
-  if (a >= 100) return trim(n, 0);
-  if (a >= 10) return trim(n, 1);
-  if (a >= 0.01 || a === 0) return trim(n, 2);
-  return String(Number(n.toPrecision(2)));
+  for (let i = 0; i < SCALES.length; i++) {
+    const [v, s] = SCALES[i];
+    const last = i === SCALES.length - 1;
+    if (!last && a >= SCALES[i + 1][0]) continue;
+    const x = n / v;
+    const text = trim(x, Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : 2);
+    if (!last && Math.abs(Number(text)) >= 1000) continue; // 999.6k rounds to 1000k: show 1M
+    return `${text}${s}`;
+  }
+  return String(n);
 }
 
 /** A per-second rate in the chosen unit (per second or per minute), 1000 mB = 1 B. */
@@ -76,8 +81,10 @@ export function formatEU(eut: number): string {
  * EU/s). Returned per second (fluids in mB) and per tick for EU.
  */
 export function parseRate(text: string, unit: 'mB' | 'item' | 'eu'): number | null {
-  const m = /^\s*([\d.,]+)\s*(k|g|t|m(?!b|in))?\s*(mb|b|l)?\s*(\/s|\/min|\/m|eu\/t|eu\/s|eu)?\s*$/i.exec(text);
+  // Commas only as thousands separators ("1,000"), so "1,5" is refused rather than read as 15.
+  const m = /^\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?|\.\d+)\s*(k|g|t|m(?!b|in))?\s*(mb|b|l)?\s*(\/s|\/min|\/m|eu\/t|eu\/s|eu)?\s*$/i.exec(text);
   if (!m) return null;
+  if (m[3] && unit !== 'mB') return null; // a fluid unit on an item or EU field
   let n = parseFloat(m[1].replace(/,/g, ''));
   if (!Number.isFinite(n)) return null;
   const mult = m[2]?.toLowerCase();

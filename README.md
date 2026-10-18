@@ -19,7 +19,7 @@ Drop in machines, link their inputs and outputs, and gtcalc works out how many o
 
 - React 19, TypeScript, Vite and Tailwind 4, hosted on Vercel (pushes to `main` deploy to gtcalc.app)
 - Firebase Authentication and Firestore (London region); `firestore.rules` is the security boundary
-- Vercel functions in `api/`: link-preview pages and images for shared flows (`flow.ts`, `og.ts`), the sitemap and the username check
+- Vercel functions in `api/`: link-preview pages and images for shared flows (`flow.ts`, `og.ts`), account emails (`account-email.ts`), the modpack search for "Suggest a pack" (`pack-search.ts`), the sitemap and the username check
 - Recipe data in `public/data` and textures in `public/textures`, generated from a modpack instance by `npm run import-recipes`
 
 ## Working on it
@@ -27,8 +27,10 @@ Drop in machines, link their inputs and outputs, and gtcalc works out how many o
 ```
 npm ci
 npm run dev        # local dev server (needs .env.local with the Firebase web config, see .env.example)
-npm run build      # type-check and production build
+npm run build      # type-check (site, api/ and tests) and production build
 npm run lint
+npm test           # unit tests: solver, sync, formatting, flow checks, /api/flow
+npm run test:rules # Firestore rules tests in the local emulator (needs Java 11+)
 ```
 
 Database rules and indexes: `npx firebase-tools deploy --only firestore --project greg-calc`.

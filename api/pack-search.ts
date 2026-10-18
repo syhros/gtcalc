@@ -4,7 +4,9 @@
  * browser's behalf, since its API doesn't allow calls from other sites. Answers
  * { hits: [{ name, summary, url, icon, downloads, source }] }, at most 8.
  */
-const recent = new Map<string, number[]>(); // best-effort throttle per server instance
+import { ipThrottle } from './_throttle.js'; // Node ESM needs the extension
+
+const allowed = ipThrottle(40, 60_000);
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': status === 200 ? 'public, max-age=3600' : 'no-store' } });
@@ -16,12 +18,7 @@ export async function GET(request: Request): Promise<Response> {
   const q = (new URL(request.url).searchParams.get('q') ?? '').trim().slice(0, 60);
   if (q.length < 2) return json({ hits: [] });
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const now = Date.now();
-  const hits = (recent.get(ip) ?? []).filter((t) => now - t < 60_000);
-  if (hits.length >= 40) return json({ hits: [], error: 'Too many searches. Wait a minute' }, 429);
-  hits.push(now);
-  recent.set(ip, hits);
+  if (!allowed(request)) return json({ hits: [], error: 'Too many searches. Wait a minute' }, 429);
 
   try {
     const res = await fetch(`https://www.modpackindex.com/api/v1/modpacks?limit=8&name=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(5000), headers: { accept: 'application/json' } });
@@ -33,7 +30,7 @@ export async function GET(request: Request): Promise<Response> {
         name: p.name,
         summary: p.summary ?? '',
         url,
-        icon: p.thumbnail_url ?? null,
+        icon: p.thumbnail_url && /^https:\/\//i.test(p.thumbnail_url) ? p.thumbnail_url : null, // only https images
         downloads: p.download_count ?? 0,
         source: /curseforge\.com/i.test(url) ? 'curseforge' : /modrinth\.com/i.test(url) ? 'modrinth' : 'link',
       };
