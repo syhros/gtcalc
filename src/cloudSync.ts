@@ -10,8 +10,14 @@
  */
 
 export interface SyncFlow { id: string; name: string; savedAt: number; draft?: boolean; nodes: unknown[]; connections: unknown[]; targetEUtBudget: number }
-/** Uploads; returns ids worth retrying (network trouble). */
-export interface SyncAdapter { push: (flows: SyncFlow[], deleted: string[]) => Promise<string[] | void> }
+/**
+ * What a push did. `stored`: ids the server now holds (uploaded) or confirmed gone (deleted).
+ * `retry`: ids that failed for a reason worth retrying (network trouble). Any other id was
+ * refused (too big, or rejected by the rules) and lives only in this browser.
+ */
+export interface PushResult { stored: string[]; retry: string[] }
+/** Uploads flows and deletes; throwing means nothing was confirmed (all are retried). */
+export interface SyncAdapter { push: (flows: SyncFlow[], deleted: string[]) => Promise<PushResult> }
 
 const SYNC_MS = 30_000;
 const TOMBSTONES = 'gt_calc_flow_tombstones';
@@ -65,6 +71,13 @@ export function markSynced(uid: string, ids: Iterable<string>) {
   for (const id of ids) set.add(id);
   writeSet(syncedKey(uid), set);
 }
+/** Flows whose latest version isn't on the server, so logout must keep them here. */
+function unmarkSynced(uid: string, ids: string[]) {
+  if (!ids.length) return;
+  const set = readSet(syncedKey(uid));
+  for (const id of ids) set.delete(id);
+  writeSet(syncedKey(uid), set);
+}
 /** On logout: the account's server-backed flow ids (then forgotten), minus any not yet uploaded. */
 export function takeSynced(uid: string) {
   const set = readSet(syncedKey(uid));
@@ -99,19 +112,25 @@ export async function flushSync() {
   const uid = account;
   changed.clear();
   deleted.clear();
-  let retry: string[] = [];
+  let result: PushResult;
   try {
-    retry = (await adapter.push(flows, gone)) ?? [];
+    result = await adapter.push(flows, gone);
   } catch {
-    retry = [...flows.map((f) => f.id), ...gone];
+    result = { stored: [], retry: [...flows.map((f) => f.id), ...gone] };
   }
-  const again = new Set(retry);
+  const again = new Set(result.retry);
+  const stored = new Set(result.stored);
   // Retry later; newer versions queued meanwhile win.
   for (const f of flows) if (again.has(f.id) && !changed.has(f.id)) changed.set(f.id, f);
   for (const id of gone) if (again.has(id) && !seen.has(id)) deleted.add(id);
-  if (uid) markSynced(uid, flows.filter((f) => !again.has(f.id)).map((f) => f.id));
+  // Only flows the server confirmed are safe to clear at logout; a refused or pending version
+  // (even of a flow synced before) keeps the local copy.
+  if (uid) {
+    markSynced(uid, flows.filter((f) => stored.has(f.id)).map((f) => f.id));
+    unmarkSynced(uid, flows.filter((f) => !stored.has(f.id)).map((f) => f.id));
+  }
   const graves = tombstones();
-  for (const id of gone) if (!again.has(id)) graves.delete(id); // confirmed gone on the server
+  for (const id of gone) if (stored.has(id)) graves.delete(id); // confirmed gone on the server
   writeSet(TOMBSTONES, graves);
   setTimeout(() => setStatus(changed.size || deleted.size ? 'pending' : 'idle'), 600); // let the animation be seen
 }

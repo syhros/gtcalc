@@ -9,11 +9,13 @@
  * database rules apply that list as well).
  */
 
+import { ipThrottle } from './_throttle.js'; // Node ESM needs the extension
+
 declare const process: { env: Record<string, string | undefined> }; // Node global on Vercel
 
 const NAME = /^[A-Za-z0-9_-]{3,20}$/;
-// Best-effort throttle per server instance, so the endpoint can't be used to burn the API quota.
-const recent = new Map<string, number[]>();
+// Best-effort throttle, so the endpoint can't be used to burn the API quota.
+const allowed = ipThrottle(20, 60_000);
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -23,12 +25,7 @@ export async function GET(request: Request): Promise<Response> {
   const name = new URL(request.url).searchParams.get('u') ?? '';
   if (!NAME.test(name)) return json({ ok: false, reason: 'Username: 3 to 20 letters, numbers, - or _' });
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const now = Date.now();
-  const hits = (recent.get(ip) ?? []).filter((t) => now - t < 60_000);
-  if (hits.length >= 20) return json({ ok: false, reason: 'Too many checks. Wait a minute and try again' }, 429);
-  hits.push(now);
-  recent.set(ip, hits);
+  if (!allowed(request)) return json({ ok: false, reason: 'Too many checks. Wait a minute and try again' }, 429);
 
   const key = process.env.APIVERVE_API_KEY;
   if (!key) return json({ ok: true, checked: false });

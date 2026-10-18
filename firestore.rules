@@ -37,6 +37,15 @@ service cloud.firestore {
         && !s.matches('(?s)(.*[^a-z0-9])?(n+[a4@]+z+[i1!|]+|n+[a4@]+z+[i1!|]+[s5$]+|[s5$]+h+[i1!|]+[t7+]+|r+[e3]+[t7+]+[a4@]+r+d+|r+[e3]+[t7+]+[a4@]+r+d+[e3]+d+|c+h+[i1!|]+n+k+|[s5$]+p+[i1!|]+c+|c+[o0]+[o0]+n+|[g9]+[o0]+[o0]+k+|p+[a4@]+k+[i1!|]+|d+y+k+[e3]+|c+u+n+[t7+]+|r+[a4@]+p+[e3]+|r+[a4@]+p+[i1!|]+[s5$]+[t7+]+|p+[e3]+d+[o0]+|k+y+[s5$]+|[a4@]+[s5$]+[s5$]+|[a4@]+r+[s5$]+[e3]+|f+[a4@]+[g9]+|c+u+m+|d+[i1!|]+c+k+|c+[o0]+c+k+|[t7+]+w+[a4@]+[t7+]+|w+[a4@]+n+k+|j+[i1!|]+z+z+|p+[o0]+r+n+|[s5$]+[e3]+x+|[a4@]+n+[a4@]+l+|[t7+]+[i1!|]+[t7+]+[s5$]+)([^a-z0-9].*)?');
     }
 
+    // A shared flow's summary numbers, checked the same way on a new share and on an update.
+    function validStats(s) {
+      return s is map
+        && s.keys().hasOnly(['machines', 'topTier', 'lowTier', 'eutUse', 'eutGen', 'output'])
+        && s.machines is number && s.eutUse is number && s.eutGen is number
+        && str(s.topTier, 1, 8) && str(s.lowTier, 1, 8)
+        && (!('output' in s) || (s.output is map && str(s.output.id, 1, 200) && str(s.output.name, 1, 200)));
+    }
+
     // Rate limits: the caller's own stamp, set to the server time in the same write.
     function limits() { return /databases/$(database)/documents/limits/$(me()); }
     function stampedNow(field) { return getAfter(limits()).data[field] == request.time; }
@@ -63,7 +72,8 @@ service cloud.firestore {
         // An id only changes together with its time stamp.
         && (!('lastCommentId' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.lastComment == request.time)
         && (!('lastBuildId' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.lastBuild == request.time);
-      allow delete: if signedIn() && uid == me(); // deleting the account
+      // Only once the profile is gone (deleting the account): a missing stamp counts as "waited".
+      allow delete: if signedIn() && uid == me() && !exists(profile());
     }
 
     // Username claims: one per name, created once by the owner at sign-up, or again when a
@@ -80,8 +90,10 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/bannedNames/$(name)) // denied by a moderator
         // Accounts without an email sign in with an address made from their first username.
         && (!('loginAs' in request.resource.data) || request.resource.data.loginAs.matches('^[a-z0-9_-]{3,20}$'))
-        // One username per account: a new account, or a flagged one renaming (its profile takes this name).
-        && (!exists(profile()) || (flagged() && getAfter(profile()).data.username == request.resource.data.username));
+        // One username per account: a new account, or a flagged one renaming. Either way the profile
+        // takes this name in the same batch, so names can't be claimed on their own.
+        && (!exists(profile()) || flagged())
+        && getAfter(profile()).data.username == request.resource.data.username;
       allow update: if signedIn() && resource.data.uid == me() && onlyChanged(['hasEmail']) && request.resource.data.hasEmail is bool;
       // Releasing a flagged name, or the account is being deleted (its profile goes in the same batch).
       allow delete: if signedIn() && resource.data.uid == me() && (flagged() || !existsAfter(profile()));
@@ -200,7 +212,9 @@ service cloud.firestore {
             && request.resource.data.username != resource.data.username
             && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username.lower())).data.uid == me())
       );
-      allow delete: if signedIn() && uid == me(); // deleting the account
+      // Deleting the account: the username claim goes in the same batch, so it can't be kept and re-claimed.
+      allow delete: if signedIn() && uid == me()
+        && !existsAfter(/databases/$(database)/documents/usernames/$(resource.data.username.lower()));
 
       // Saved flows are private to their owner.
       match /flows/{flowId} {
@@ -220,14 +234,17 @@ service cloud.firestore {
     // can release it by deleting the build.
     match /fingerprints/{fp} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if signedIn() && fp.matches('^[0-9a-f]{24}$')
         && request.resource.data.keys().hasOnly(['uid', 'buildId'])
         && request.resource.data.uid == me()
-        // For a new build its id is <uid>_<fp>; an updated build keeps its id and claims the new fp.
+        // For a new build its id is <uid>_<fp>; an updated build keeps its id and claims the new fp,
+        // which the build records in the same write (so each update claims at most one).
         && ((request.resource.data.buildId == me() + '_' + fp
              && existsAfter(/databases/$(database)/documents/builds/$(me() + '_' + fp)))
           || (request.resource.data.buildId.matches(me() + '_[0-9a-f]{24}')
-             && get(/databases/$(database)/documents/builds/$(request.resource.data.buildId)).data.authorId == me()));
+             && get(/databases/$(database)/documents/builds/$(request.resource.data.buildId)).data.authorId == me()
+             && getAfter(/databases/$(database)/documents/builds/$(request.resource.data.buildId)).data.get('fp', '') == fp
+             && getAfter(/databases/$(database)/documents/builds/$(request.resource.data.buildId)).data.get('updatedAt', null) == request.time));
       allow update: if false;
       allow delete: if signedIn() && (resource.data.uid == me() || isMod());
     }
@@ -251,12 +268,7 @@ service cloud.firestore {
         && str(request.resource.data.description, 0, 2000) && (request.resource.data.description == '' || clean(request.resource.data.description))
         && str(request.resource.data.pack, 1, 40)
         && str(request.resource.data.flowJson, 2, 900000)
-        && request.resource.data.stats is map
-        && request.resource.data.stats.keys().hasOnly(['machines', 'topTier', 'lowTier', 'eutUse', 'eutGen', 'output'])
-        && request.resource.data.stats.machines is number && request.resource.data.stats.eutUse is number && request.resource.data.stats.eutGen is number
-        && str(request.resource.data.stats.topTier, 1, 8) && str(request.resource.data.stats.lowTier, 1, 8)
-        && (!('output' in request.resource.data.stats) || (request.resource.data.stats.output is map
-            && str(request.resource.data.stats.output.id, 1, 200) && str(request.resource.data.stats.output.name, 1, 200)))
+        && validStats(request.resource.data.stats)
         && (!('schematicName' in request.resource.data) || str(request.resource.data.schematicName, 1, 100))
         && (!('sourceFlowId' in request.resource.data) || str(request.resource.data.sourceFlowId, 1, 80))
         && request.resource.data.upvoters == [] && request.resource.data.favoriters == []
@@ -283,14 +295,14 @@ service cloud.firestore {
             && str(request.resource.data.description, 0, 2000) && (request.resource.data.description == '' || clean(request.resource.data.description)))
         // After a rename, the author's builds show the new name.
         || (resource.data.authorId == me() && onlyChanged(['author']) && request.resource.data.author == myUsername())
-        // The author updates the flow itself (votes, comments and the link stay).
-        || (resource.data.authorId == me() && onlyChanged(['flowJson', 'stats', 'updatedAt'])
+        // The author updates the flow itself (votes, comments and the link stay). The new flow's
+        // fingerprint is recorded and claimed for this build in the same batch, as on a new share.
+        || (resource.data.authorId == me() && onlyChanged(['flowJson', 'stats', 'updatedAt', 'fp'])
             && str(request.resource.data.flowJson, 2, 900000)
             && request.resource.data.updatedAt == request.time
-            && request.resource.data.stats is map
-            && request.resource.data.stats.keys().hasOnly(['machines', 'topTier', 'lowTier', 'eutUse', 'eutGen', 'output'])
-            && request.resource.data.stats.machines is number && request.resource.data.stats.eutUse is number && request.resource.data.stats.eutGen is number
-            && str(request.resource.data.stats.topTier, 1, 8) && str(request.resource.data.stats.lowTier, 1, 8))
+            && validStats(request.resource.data.stats)
+            && request.resource.data.get('fp', '').matches('^[0-9a-f]{24}$')
+            && getAfter(/databases/$(database)/documents/fingerprints/$(request.resource.data.fp)).data.buildId == buildId)
       );
       allow delete: if signedIn() && (resource.data.authorId == me() || isMod()); // moderators remove reported flows
 
@@ -332,6 +344,9 @@ service cloud.firestore {
           && request.resource.data.up is list && request.resource.data.down is list
           && request.resource.data.up.removeAll([me()]) == resource.data.up.removeAll([me()])
           && request.resource.data.down.removeAll([me()]) == resource.data.down.removeAll([me()])
+          // At most one copy of the caller's uid in each list.
+          && request.resource.data.up.size() <= resource.data.up.removeAll([me()]).size() + 1
+          && request.resource.data.down.size() <= resource.data.down.removeAll([me()]).size() + 1
           && !(request.resource.data.up.hasAny([me()]) && request.resource.data.down.hasAny([me()])))
           || (resource.data.authorId == me() && onlyChanged(['author']) && request.resource.data.author == myUsername()));
         allow delete: if signedIn() && (resource.data.authorId == me() || isMod()

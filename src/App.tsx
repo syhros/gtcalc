@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { ArrowRight, BookOpen, CheckSquare, ChevronDown, ChevronRight, ChevronUp, Minus, Plus, Tag, SquareDashed, Trash2, Download, Factory, FileJson, Image as ImageIcon, LayoutGrid, Link2, Loader2, Magnet, Menu, Redo2, Save, Scale, Square, Undo2, Unlink, Upload, Users, X, Share2, ChevronLeft, FolderOpen, Lock, LockOpen } from 'lucide-react';
 import { TIER_ORDER, TIERS, type CanvasNode, type Connection, type GeneratorConfig, type MachineRecipe, type MultiConfig, type RecipeItem, type VoltageTier } from './types';
 import { itemsMatch, MODPACKS, useRecipeDatabase, type ModpackId, type RecipeDatabase } from './recipeData';
-import { machineStats, nodeInputs, perCycle, solveFlows, type FlowResult } from './solver';
+import { machineStats, nodeInputs, perCycle, perCycleOf, solveFlows, type FlowResult } from './solver';
 import { nearestFree, placeBadges, type Rect } from './layout';
 import { planRoute, warmRouteCosts } from './bestRoute';
 import { fromGtnhProject, isGtnhProject } from './importers';
@@ -10,6 +10,7 @@ import { MultiblockSettings } from './components/MultiblockSettings';
 import { communityEnabled, currentUser, fetchFlows, flowLink, flowSignature, recordCopy, updateSharedBuild, logout, onUserChange, pushFlows, subscribeBuilds, type Build, type User } from './community';
 import { makeExamples } from './examples';
 import { analyzeFlow, machineTotals } from './buildStats';
+import { cleanFlow } from './flowShape';
 import { markSynced, noteSaves, primeSaves, queueDeletes, queueFlows, setSyncAdapter, takeSynced, tombstones } from './cloudSync';
 import { compact, euUnit, formatEU, formatRate, parseRate, visibleColor, useUnits } from './format';
 import { NODE_TARGET_WIDE, NODE_WIDE, NODE_WIDTH, NodeCard, SUPPLY_WIDTH, type LinkHint } from './components/NodeCard';
@@ -626,13 +627,21 @@ export function App() {
   useEffect(() => writePref('gt_calc_auto_mode', autoMode), [autoMode]);
 
   // ---------------------------------------------------------------- persistence
+  const autosaveWarned = useRef(false);
   useEffect(() => {
     if (draggingNodeId || viewFlow) return; // view mode: the user's own flow stays as last stored
     const t = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, connections, targetEUtBudget: budget, currentSave }));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, connections, targetEUtBudget: budget, currentSave }));
+        autosaveWarned.current = false;
+      } catch {
+        // Storage full or blocked: say so once, rather than silently losing the autosave.
+        if (!autosaveWarned.current) setToast('This browser\'s storage is full, so the canvas isn\'t being autosaved. Save the flow or export it');
+        autosaveWarned.current = true;
+      }
     }, 400);
     return () => clearTimeout(t);
-  }, [nodes, connections, budget, draggingNodeId, currentSave, viewFlow]);
+  }, [nodes, connections, budget, draggingNodeId, currentSave, viewFlow, setToast]);
 
   // ---------------------------------------------------------------- undo / redo
   // Snapshots are taken once things settle (not on every drag frame).
@@ -1510,7 +1519,7 @@ export function App() {
         if (target.recipe.generatesEU) targetUpdate = { targetEUt: count * ts.eutPerMachine, targetRate: undefined };
         else {
           const out = target.recipe.outputs.find((o) => o.id === (target.targetRate?.itemId ?? target.recipe.outputs[0]?.id));
-          if (out) targetUpdate = { targetRate: { itemId: out.id, perSec: fullCycles * perCycle(out, ts) }, targetEUt: undefined };
+          if (out) targetUpdate = { targetRate: { itemId: out.id, perSec: fullCycles * perCycleOf(target.recipe.outputs, out.id, ts) }, targetEUt: undefined };
         }
       }
     }
@@ -1916,7 +1925,7 @@ export function App() {
   /** Paste copied cards beside the originals (new ids, never a second target), selected. */
   const pasteSelection = () => {
     let clip: { nodes: CanvasNode[]; connections: Connection[] } | null = null;
-    try { clip = JSON.parse(localStorage.getItem('gt_calc_clipboard') || 'null'); } catch { clip = null; }
+    try { clip = cleanFlow(JSON.parse(localStorage.getItem('gt_calc_clipboard') || 'null')); } catch { clip = null; }
     if (!clip?.nodes?.length) return;
     const stamp = Date.now().toString(36);
     const ids = new Map(clip.nodes.map((n, k) => [n.instanceId, `${isSupply(n) ? 'supply' : 'node'}_${stamp}_p${k}`]));
@@ -2509,7 +2518,7 @@ export function App() {
     const taken = new Set(current.map((x) => x.name.toLowerCase()));
     // Imported files are untrusted: keep only well-formed flows, with names and dates the app
     // (and the sync rules) accept.
-    const valid = incoming.filter((x) => x && Array.isArray(x.nodes) && x.nodes.every((n) => n && typeof n.instanceId === 'string' && n.recipe && Array.isArray(n.recipe.inputs) && Array.isArray(n.recipe.outputs)));
+    const valid = incoming.flatMap((x) => { const f = cleanFlow(x); return f ? [{ ...x, ...f }] : []; });
     if (valid.length < incoming.length) failed.push(`${incoming.length - valid.length} damaged flow${incoming.length - valid.length === 1 ? '' : 's'}`);
     if (!valid.length) { setToast(`Could not read ${failed.join(', ')}`); return; }
     const added = valid.map((x, i) => {
@@ -2783,7 +2792,7 @@ export function App() {
     } else {
       const itemId = target.targetRate?.itemId ?? target.recipe.outputs[0]?.id;
       const item = target.recipe.outputs.find((o) => o.id === itemId);
-      if (item) updateNode(target.instanceId, { targetRate: { itemId: item.id, perSec: cycles * perCycle(item, stats) }, targetEUt: undefined });
+      if (item) updateNode(target.instanceId, { targetRate: { itemId: item.id, perSec: cycles * perCycleOf(target.recipe.outputs, item.id, stats) }, targetEUt: undefined });
     }
   };
 
@@ -3843,8 +3852,9 @@ export function App() {
               used += flows.connections.get(c.id)?.needed ?? 0;
             }
             const spare = Math.max(0, made - used);
-            const inp = nodeInputs(target, tf.stats).find((i) => i.id === allocPrompt.inputId);
-            const perMachine = inp ? perCycle(inp, tf.stats) / tf.stats.durationSec : 0;
+            const targetInputs = nodeInputs(target, tf.stats);
+            const inp = targetInputs.find((i) => i.id === allocPrompt.inputId);
+            const perMachine = perCycleOf(targetInputs, allocPrompt.inputId, tf.stats) / tf.stats.durationSec;
             const count = perMachine > 0 ? Math.floor(spare / perMachine + 1e-6) : 0;
             if (count <= tf.machines) return null;
             const unit = inp?.unit ?? 'mB';

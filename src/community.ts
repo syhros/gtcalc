@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 import type { CanvasNode, Connection } from './types';
 import { fb, firebaseEnabled } from './firebase';
+import { cleanFlow } from './flowShape';
 import { REVIEW_SCORE, assertClean, assertCleanText, assertCleanUsername, textScore, usernameScore } from './moderation';
 
 /**
@@ -387,7 +388,7 @@ export async function unbanName(name: string) {
 }
 
 /**
- * Password reset: the site sends its own email (/api/reset-password, our template from gtcalc.app).
+ * Password reset: the site sends its own email (/api/account-email, our template from gtcalc.app).
  * If that isn't available (local dev, or the server is missing its keys), Firebase sends its own.
  */
 export async function resetPassword(email: string) {
@@ -486,13 +487,10 @@ const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typ
 function safeFlow(raw: unknown): BuildFlow | null {
   let f: unknown = raw;
   if (typeof raw === 'string') { try { f = JSON.parse(raw); } catch { return null; } }
-  const o = f as Partial<BuildFlow> | null;
-  if (!o || !Array.isArray(o.nodes) || !Array.isArray(o.connections ?? [])) return null;
-  const nodes = o.nodes.filter((n) => n && typeof n === 'object' && typeof n.instanceId === 'string' && typeof n.x === 'number' && typeof n.y === 'number'
-    && n.recipe && typeof n.recipe === 'object' && Array.isArray(n.recipe.inputs) && Array.isArray(n.recipe.outputs) && typeof n.recipe.machineName === 'string');
-  const known = new Set(nodes.map((n) => n.instanceId));
-  const connections = (o.connections ?? []).filter((c) => c && typeof c.id === 'string' && known.has(c.sourceInstanceId) && known.has(c.targetInstanceId));
-  return { ...o, nodes, connections, targetEUtBudget: num(o.targetEUtBudget) || 100000 } as BuildFlow;
+  const clean = cleanFlow(f);
+  if (!clean) return null;
+  const o = f as Partial<BuildFlow>;
+  return { ...o, ...clean, targetEUtBudget: num(o.targetEUtBudget) || 100000 } as BuildFlow;
 }
 function safeStats(raw: unknown): BuildStats {
   const s = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
@@ -543,16 +541,7 @@ export function subscribeBuilds(pack: string, fn: (builds: Build[]) => void, onE
 const MAX_FLOW_JSON = 800_000; // Firestore documents top out at 1 MB
 export const MAX_SCHEMATIC_BYTES = 700_000;
 
-/**
- * What makes a flow the same flow for "has it changed since I shared it?": machines, recipes,
- * tiers, counts, targets and links. Card positions don't count.
- */
-export function flowSignature(f: { nodes: CanvasNode[]; connections: Connection[] }): string {
-  const nodes = f.nodes.map((n) => [n.instanceId, n.recipe.id, n.selectedTier, n.countMode === 'manual' ? n.count : 'auto', n.multi?.variantId ?? '', n.multi?.parallel ?? 0,
-    n.gen?.variantId ?? '', n.gen?.boostOn ? 1 : 0, n.isTarget ? 1 : 0, n.targetRate ? `${n.targetRate.itemId}:${n.targetRate.perSec}` : '', n.targetEUt ?? '', n.supplyLimit ?? '', n.setupLocked ? 1 : 0].join('|')).sort();
-  const links = f.connections.map((c) => `${c.sourceInstanceId}>${c.sourceItemId}>${c.targetInstanceId}>${c.targetItemId}`).sort();
-  return `${nodes.join(';')}#${links.join(';')}`;
-}
+export { flowSignature } from './flowSignature';
 
 /** Replace a shared flow with the author's current version (votes, comments and link stay). */
 export async function updateSharedBuild(build: Build, flow: BuildFlow, stats: BuildStats) {
@@ -565,7 +554,8 @@ export async function updateSharedBuild(build: Build, flow: BuildFlow, stats: Bu
   const claim = (await getDoc(doc(db, 'fingerprints', fp))).data();
   if (claim && claim.buildId !== build.id) throw new Error('This exact flow is already on Community');
   const batch = writeBatch(db);
-  batch.update(doc(db, 'builds', build.id), { flowJson, stats: JSON.parse(JSON.stringify(stats)), updatedAt: serverTimestamp() });
+  // The rules check that the recorded fingerprint is claimed for this build in the same batch.
+  batch.update(doc(db, 'builds', build.id), { flowJson, stats: JSON.parse(JSON.stringify(stats)), updatedAt: serverTimestamp(), fp });
   if (!claim) batch.set(doc(db, 'fingerprints', fp), { uid: u.uid, buildId: build.id });
   try { await batch.commit(); } catch (e) { throw friendly(e); }
 }
@@ -881,12 +871,15 @@ export async function fetchFlows(pack: string): Promise<CloudFlow[]> {
 /**
  * Upload changed flows and remove deleted ones, one write each: a flow the server refuses (too
  * big, or older than the copy already there) is skipped instead of blocking the others.
- * Returns the ids that failed for a reason worth retrying (network).
+ * Returns the ids the server confirmed and the ids that failed for a reason worth retrying
+ * (network); the rest were refused and stay only in this browser.
  */
-export async function pushFlows(flows: CloudFlow[], deleted: string[]): Promise<string[]> {
-  if (!user) return [];
+export async function pushFlows(flows: CloudFlow[], deleted: string[]): Promise<{ stored: string[]; retry: string[] }> {
+  const all = [...flows.map((f) => f.id), ...deleted];
+  if (!user) return { stored: [], retry: all };
   const { db } = fb();
   const uid = user.uid;
+  const stored: string[] = [];
   const retry: string[] = [];
   const isNetwork = (e: unknown) => /unavailable|network|deadline/i.test(String((e as { code?: string }).code ?? e));
   for (const f of flows) {
@@ -894,10 +887,12 @@ export async function pushFlows(flows: CloudFlow[], deleted: string[]): Promise<
     if (json.length > MAX_FLOW_JSON) continue; // too big for one document: stays in this browser
     const savedAt = Number.isFinite(f.savedAt) ? f.savedAt : Date.now();
     await setDoc(doc(db, 'users', uid, 'flows', f.id), { name: String(f.name).slice(0, 64), savedAt, draft: !!f.draft, json, pack: f.pack })
-      .catch((e) => { if (isNetwork(e)) retry.push(f.id); });
+      .then(() => { stored.push(f.id); }, (e) => { if (isNetwork(e)) retry.push(f.id); });
   }
-  for (const id of deleted) await deleteDoc(doc(db, 'users', uid, 'flows', id)).catch((e) => { if (isNetwork(e)) retry.push(id); });
-  return retry;
+  for (const id of deleted) {
+    await deleteDoc(doc(db, 'users', uid, 'flows', id)).then(() => { stored.push(id); }, (e) => { if (isNetwork(e)) retry.push(id); });
+  }
+  return { stored, retry };
 }
 
 export const upvotes = (b: Build) => b.upvoters.length;

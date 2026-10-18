@@ -13,9 +13,25 @@ const field = (f: Record<string, any> | undefined, k: string) => {
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const html = await (await fetch(new URL('/index.html', url.origin))).text();
+  const html = await indexHtml(url.origin);
+  if (html == null) {
+    return new Response('<!doctype html><title>gtcalc</title><p>gtcalc could not load this page. <a href="">Reload</a></p>', {
+      status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Retry-After': '5', 'Cache-Control': 'no-store' },
+    });
+  }
   // A preview problem must never break the link: on any error, serve the normal page.
   try { return await withPreview(url, html); } catch { return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }); }
+}
+
+/** The site's own index.html, tried twice; null if it can't be fetched. */
+async function indexHtml(origin: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(new URL('/index.html', origin));
+      if (res.ok) return await res.text();
+    } catch { /* try again */ }
+  }
+  return null;
 }
 
 async function withPreview(url: URL, html: string): Promise<Response> {
@@ -72,10 +88,11 @@ async function withPreview(url: URL, html: string): Promise<Response> {
         ${machines.length ? `<h2>Machines</h2><ul>${machines.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` : ''}
         <p><a href="/">Open gtcalc</a> to view, copy or change this flow.</p>
       </main>`;
+  // Function replacers: a string replacement would read $&, $` and $' in the user's text as patterns.
   const stripped = html
-    .replace(/<main class="seo-intro">[\s\S]*?<\/main>/, intro)
+    .replace(/<main class="seo-intro">[\s\S]*?<\/main>/, () => intro)
     .replace(/<title>[\s\S]*?<\/title>/, '')
     .replace(/\s*<link rel="canonical"[^>]*>/, '')
     .replace(/\s*<meta (name="description"|property="og:[^"]+"|name="twitter:[^"]+")[^>]*>/g, '');
-  return page(stripped.replace('</head>', `    ${tags}\n  </head>`));
+  return page(stripped.replace('</head>', () => `    ${tags}\n  </head>`));
 }

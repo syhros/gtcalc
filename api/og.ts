@@ -36,10 +36,48 @@ const val = (f: Record<string, any> | undefined, k: string) => {
   return v?.stringValue ?? (v?.integerValue != null ? Number(v.integerValue) : v?.doubleValue);
 };
 const compact = (n: number) => {
+  const scales = [[1, ''], [1e3, 'k'], [1e6, 'M'], [1e9, 'G'], [1e12, 'T']] as const;
   const a = Math.abs(n);
-  for (const [v, s] of [[1e12, 'T'], [1e9, 'G'], [1e6, 'M'], [1e3, 'k']] as const) if (a >= v) return `${+(n / v).toFixed(n / v >= 100 ? 0 : n / v >= 10 ? 1 : 2)}${s}`;
-  return `${+n.toFixed(a >= 10 ? 1 : 2)}`;
+  for (let i = 0; i < scales.length; i++) {
+    const [v, s] = scales[i];
+    const last = i === scales.length - 1;
+    if (!last && a >= scales[i + 1][0]) continue;
+    const x = n / v;
+    const text = `${+x.toFixed(Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : 2)}`;
+    if (!last && Math.abs(+text) >= 1000) continue; // 999.6k rounds to 1000k: show 1M
+    return `${text}${s}`;
+  }
+  return String(n);
 };
+
+// The map shows at most this many cards and links (a shared flow's JSON is user data).
+const MAX_CARDS = 400, MAX_LINKS = 1200;
+const str = (v: unknown) => (typeof v === 'string' ? v : '');
+const isObj = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object';
+/** A shared flow's cards and links, keeping only well-formed ones. */
+function readMap(flowJson: unknown): { nodes: Node[]; links: Link[] } {
+  let flow: unknown;
+  try { flow = JSON.parse(String(flowJson)); } catch { return { nodes: [], links: [] }; }
+  if (!isObj(flow)) return { nodes: [], links: [] };
+  const nodes: Node[] = (Array.isArray(flow.nodes) ? flow.nodes : [])
+    .filter((n: unknown) => isObj(n) && typeof n.instanceId === 'string' && Number.isFinite(n.x) && Number.isFinite(n.y) && isObj(n.recipe))
+    .slice(0, MAX_CARDS)
+    .map((n: Record<string, any>) => ({
+      instanceId: n.instanceId, x: n.x, y: n.y, isTarget: n.isTarget === true,
+      selectedTier: typeof n.selectedTier === 'string' ? n.selectedTier.slice(0, 8) : undefined,
+      multi: isObj(n.multi) && typeof n.multi.name === 'string' ? { name: n.multi.name } : undefined,
+      gen: isObj(n.gen) ? { kind: str(n.gen.kind), name: str(n.gen.name) } : undefined,
+      recipe: {
+        kind: str(n.recipe.kind), machineName: str(n.recipe.machineName) || 'Machine', recipeName: str(n.recipe.recipeName),
+        outputs: (Array.isArray(n.recipe.outputs) ? n.recipe.outputs : []).filter((o: unknown) => isObj(o) && typeof o.id === 'string')
+          .map((o: Record<string, any>) => ({ id: o.id, iconColor: str(o.iconColor) || undefined })),
+      },
+    }));
+  const links: Link[] = (Array.isArray(flow.connections) ? flow.connections : [])
+    .filter((l: unknown) => isObj(l) && typeof l.sourceInstanceId === 'string' && typeof l.targetInstanceId === 'string' && typeof l.sourceItemId === 'string')
+    .slice(0, MAX_LINKS);
+  return { nodes, links };
+}
 const rate = (perSec: number, unit: string) => (unit === 'mB' ? (perSec >= 1000 ? `${compact(perSec / 1000)} B/s` : `${compact(perSec)} mB/s`) : perSec < 0.1 ? `${compact(perSec * 60)}/min` : `${compact(perSec)}/s`);
 /** Very dark item colours lifted so links stay visible (as on the canvas). */
 const visible = (hex?: string) => {
@@ -72,13 +110,13 @@ export async function GET(req: Request): Promise<Response> {
     // The site's own card: an example line in the picture, with the site's name and tagline.
     const res = await fetch(DOC + 'example-skygreg-nitric').catch(() => null);
     if (res?.ok) {
-      try { const flow = JSON.parse(String(val((await res.json()).fields, 'flowJson'))); nodes = flow.nodes ?? []; links = flow.connections ?? []; } catch { /* no map */ }
+      try { ({ nodes, links } = readMap(val((await res.json()).fields, 'flowJson'))); } catch { /* no map */ }
     }
     chips = [{ text: 'Free · no login', color: '#a7f3d0', border: '#047857', bg: '#0f1f1a' }];
   }
   if (/^[\w-]{3,200}$/.test(id)) {
-    const res = await fetch(DOC + encodeURIComponent(id));
-    if (res.ok) {
+    const res = await fetch(DOC + encodeURIComponent(id)).catch(() => null); // offline: the site's plain card
+    if (res?.ok) {
       const f = (await res.json()).fields as Record<string, any>;
       name = String(val(f, 'name') ?? name);
       author = String(val(f, 'author') ?? '');
@@ -93,7 +131,7 @@ export async function GET(req: Request): Promise<Response> {
           : { text: `${compact(use)} EU/t`, color: '#fbbf24', border: '#92400e', bg: '#1c1710' },
       ];
       tiers = [String(val(st, 'lowTier') ?? ''), String(val(st, 'topTier') ?? '')];
-      try { const flow = JSON.parse(String(val(f, 'flowJson'))); nodes = flow.nodes ?? []; links = flow.connections ?? []; } catch { /* no map */ }
+      ({ nodes, links } = readMap(val(f, 'flowJson')));
     }
   }
   const fontList = await loadFonts();
@@ -102,9 +140,9 @@ export async function GET(req: Request): Promise<Response> {
 
   // The map: every card at its canvas position, scaled into the right-hand panel.
   const W = 580, H = 486, CARD_W = 420, CARD_H = 250;
-  const xs = nodes.map((n) => n.x), ys = nodes.map((n) => n.y);
-  const minX = Math.min(...xs), minY = Math.min(...ys);
-  const spanX = Math.max(...xs) + CARD_W - minX, spanY = Math.max(...ys) + CARD_H - minY;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const n of nodes) { minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); maxX = Math.max(maxX, n.x); maxY = Math.max(maxY, n.y); }
+  const spanX = maxX + CARD_W - minX, spanY = maxY + CARD_H - minY;
   const k = nodes.length ? Math.min((W - 24) / spanX, (H - 24) / spanY, 0.6) : 1;
   const ox = (W - spanX * k) / 2, oy = (H - spanY * k) / 2;
   const pos = new Map(nodes.map((n) => [n.instanceId, { x: ox + (n.x - minX) * k, y: oy + (n.y - minY) * k, w: CARD_W * k, h: CARD_H * k }]));
@@ -148,7 +186,7 @@ export async function GET(req: Request): Promise<Response> {
     const border = n.isTarget ? '#22d3ee' : supply ? '#10b981' : n.selectedTier ? tierOf(n.selectedTier).border : '#3b4a63';
     const title = supply ? 'Input' : n.gen && n.gen.kind !== 'single' && n.gen.name ? n.gen.name : n.multi?.name ?? n.recipe.machineName;
     // Shrink the name until its longest word fits the card (bold pixel letters are about 1em wide).
-    const longest = Math.max(...title.split(/\s+/).map((w) => w.length));
+    const longest = Math.max(1, ...title.split(/\s+/).slice(0, 20).map((w) => w.length));
     const fs = Math.max(6, Math.min(16, (p.w - 14) / (longest * 1.02)));
     return box({ position: 'absolute', left: p.x, top: p.y, width: p.w, height: p.h, flexDirection: 'column', border: `3px solid ${border}`, background: n.isTarget ? '#12324a' : '#161a24', overflow: 'hidden' },
       box({ alignItems: 'center', justifyContent: 'space-between', padding: '3px 5px', background: n.isTarget ? '#164260' : '#1b2130', borderBottom: '2px solid #222a3b' },

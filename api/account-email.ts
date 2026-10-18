@@ -20,6 +20,7 @@
 import { createSign } from 'node:crypto';
 import nodemailer from 'nodemailer';
 import { CHANGE_EMAIL, RESET_PASSWORD, VERIFY_EMAIL } from './_emails.js'; // Node ESM needs the extension
+import { ipThrottle } from './_throttle.js';
 
 declare const process: { env: Record<string, string | undefined> }; // Node global on Vercel
 
@@ -27,8 +28,8 @@ const PROJECT = 'greg-calc';
 const TOOLKIT = 'https://identitytoolkit.googleapis.com/v1';
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 const HIDDEN = /@users\.greg-calc\.app$/i; // username-only accounts (HIDDEN_EMAIL_DOMAIN): nowhere to send
-// Best-effort throttles per server instance.
-const byIp = new Map<string, number[]>();
+// Best-effort throttles per server instance (see _throttle.ts).
+const allowed = ipThrottle(6, 10 * 60_000);
 const byEmail = new Map<string, number>();
 
 type Template = { subject: string; html: string; text: string };
@@ -111,12 +112,9 @@ export async function POST(request: Request): Promise<Response> {
   try { body = (await request.json()) as typeof body; } catch { /* bad body */ }
   const kind = body.kind ?? 'reset';
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!allowed(request)) return json({ ok: false, reason: 'Too many requests. Wait a few minutes and try again' }, 429);
   const now = Date.now();
-  const hits = (byIp.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
-  if (hits.length >= 6) return json({ ok: false, reason: 'Too many requests. Wait a few minutes and try again' }, 429);
-  hits.push(now);
-  byIp.set(ip, hits);
+  if (byEmail.size > 5000) for (const [k, t] of byEmail) if (now - t >= 60_000) byEmail.delete(k);
   const once = (address: string) => {
     const key = `${kind}|${address.toLowerCase()}`;
     if (now - (byEmail.get(key) ?? 0) < 60_000) return false; // already sent one just now
