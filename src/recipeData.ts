@@ -30,11 +30,18 @@ interface RawData {
   rotors?: RotorInfo[];
   items: Record<string, RawItemInfo>;
   recipes: RawRecipe[];
-  // Big packs (GTNH) ship their recipes compact and split: see unpack().
+  // Packs ship their recipes compact and split (scripts/lib/pack-recipes.mjs): see unpack().
   packed?: { parts: number; file: string; items: string[]; types: string[]; idPrefix: string };
 }
-/** A compact recipe from a split file: items and machine types by number. */
-interface PackedRecipe { t: number; n: number; e: number; d: number; i: number[][]; o: number[][]; c?: number; h?: number; g?: 1 }
+/**
+ * A compact recipe from a split file: items and machine types by number. The id is
+ * `${idPrefix}${type}/${n}` unless the recipe carries its own; the tier comes from EU/t.
+ * Input rows end in 0 (not consumed) or 2 (fixed amount); output rows end in the chance.
+ */
+interface PackedRecipe {
+  t: number; n?: number | string; id?: string; e: number; d: number; i: number[][]; o: number[][];
+  c?: number; h?: number; g?: 1; b?: 1; x?: 1; s?: RawRecipe['source']; k?: string[]; u?: number;
+}
 
 /** Rebuild the recipe list of a packed pack from its parts (in order). */
 export function unpack(raw: RawData, parts: PackedRecipe[][]): RawData {
@@ -44,12 +51,16 @@ export function unpack(raw: RawData, parts: PackedRecipe[][]): RawData {
   for (const part of parts) for (const r of part) {
     const type = p.types[r.t];
     recipes.push({
-      id: `${p.idPrefix}${type}/${r.n}`, type, source: 'gtceu', tier: tierOf(r.e), eut: r.e, ticks: r.d,
-      inputs: r.i.map(([k, amount, flag]) => ({ id: p.items[k], amount, ...(flag === 0 ? { consumed: false as const } : {}) })),
+      id: r.id ?? `${p.idPrefix}${type}/${r.n}`, type, source: r.s ?? 'gtceu', tier: tierOf(r.e), eut: r.e, ticks: r.d,
+      inputs: r.i.map(([k, amount, flag]) => ({ id: p.items[k], amount, ...(flag === 0 ? { consumed: false as const } : flag === 2 ? { fixed: true as const } : {}) })),
       outputs: r.o.map(([k, amount, chance]) => ({ id: p.items[k], amount, ...(chance != null ? { chance } : {}) })),
       ...(r.c != null ? { circuit: r.c } : {}),
       ...(r.h ? { temp: r.h } : {}),
       ...(r.g ? { gen: true } : {}),
+      ...(r.b ? { boiler: true } : {}),
+      ...(r.x ? { nonGT: true } : {}),
+      ...(r.k ? { conditions: r.k } : {}),
+      ...(r.u != null ? { startEU: r.u } : {}),
     } as RawRecipe);
   }
   return { ...raw, recipes };
