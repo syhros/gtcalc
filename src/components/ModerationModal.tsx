@@ -69,7 +69,7 @@ export function ModerationModal({ onClose, onError }: { onClose: () => void; onE
           </div>
           <span className="flex-1" />
           {section === 'names' && <button onClick={reload} className="px-2 py-0.5 border border-[#2b3548] text-slate-300 hover:bg-[#202737]">Refresh</button>}
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         {section === 'flows' ? <FlowModeration onError={onError} /> : section === 'packs' ? <PackRequests onError={onError} /> : (<>
         <div className="px-3 pt-2 text-[10px] text-slate-500 leading-snug">

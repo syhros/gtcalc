@@ -34,7 +34,7 @@ export function ScrollRow({ children, className = '' }: { children: ReactNode | 
   const arrow = 'absolute top-1/2 -translate-y-1/2 z-10 h-7 w-6 flex items-center justify-center bg-[#161a24] border border-[#2b3548] text-cyan-300 hover:bg-[#202737] shadow-[0_0_10px_6px_#161a24]';
   return (
     <div className={`relative min-w-[72px] items-center ${className}`}>
-      {more.left && <button onClick={() => by(-200)} className={`${arrow} left-0`} data-tip="More buttons"><ChevronLeft className="w-4 h-4" /></button>}
+      {more.left && <button onClick={() => by(-200)} className={`${arrow} left-0`} data-tip="More buttons" aria-label="More buttons"><ChevronLeft className="w-4 h-4" /></button>}
       <div
         ref={row}
         className="flex flex-1 items-center gap-2 md:gap-3 overflow-x-auto min-w-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -42,7 +42,7 @@ export function ScrollRow({ children, className = '' }: { children: ReactNode | 
       >
         {typeof children === 'function' ? children(wide) : children}
       </div>
-      {more.right && <button onClick={() => by(200)} className={`${arrow} right-0`} data-tip="More buttons"><ChevronRight className="w-4 h-4" /></button>}
+      {more.right && <button onClick={() => by(200)} className={`${arrow} right-0`} data-tip="More buttons" aria-label="More buttons"><ChevronRight className="w-4 h-4" /></button>}
     </div>
   );
 }
@@ -72,7 +72,7 @@ export function CloudIcon() {
   const status = useSyncExternalStore(onSyncStatus, getSyncStatus, getSyncStatus);
   const tip = status === 'syncing' ? 'Saving to your account…' : status === 'pending' ? 'Saved here; it goes to your account within 30 seconds (click to send now)' : 'Your saved flows are backed up to your account';
   return (
-    <button onClick={() => void flushSync()} data-tip={tip} className={`flex items-center px-1.5 border border-l-0 ${status === 'syncing' ? 'border-sky-500/60 bg-[#161a24] text-sky-400 animate-pulse' : status === 'pending' ? 'border-[#2b3548] bg-[#161a24] text-slate-500 hover:text-slate-300' : 'border-emerald-500/70 bg-emerald-950/80 text-emerald-300'}`}>
+    <button onClick={() => void flushSync()} data-tip={tip} aria-label={tip} className={`flex items-center px-1.5 border border-l-0 ${status === 'syncing' ? 'border-sky-500/60 bg-[#161a24] text-sky-400 animate-pulse' : status === 'pending' ? 'border-[#2b3548] bg-[#161a24] text-slate-500 hover:text-slate-300' : 'border-emerald-500/70 bg-emerald-950/80 text-emerald-300'}`}>
       <Cloud className="w-3.5 h-3.5" />
     </button>
   );

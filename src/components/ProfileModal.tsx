@@ -91,7 +91,7 @@ export function ProfileModal({ user, pack, currentFlow, pixelFont, onPixelFont, 
               </>
             )}
           </div>
-          <button onClick={onClose} className="self-start text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="self-start text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
 
         {user && (

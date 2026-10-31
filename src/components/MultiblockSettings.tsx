@@ -38,7 +38,7 @@ export function MultiblockSettings({ db, disabled, onChange, onClose }: {
             <div className="font-bold text-sm text-slate-100">Large machines for Auto Ratio</div>
             <div className="text-[10px] text-slate-500">Unticked machines are never picked. {list.length - disabled.size} of {list.length} on.</div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         <div className="flex gap-1.5 p-3 pb-2">
           <input

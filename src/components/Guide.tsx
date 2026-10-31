@@ -545,7 +545,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
           >
             {SECTIONS.map((s, i) => <option key={s.id} value={s.id}>{i + 1}. {s.title}</option>)}
           </select>
-          <button onClick={onClose} className="ml-auto w-7 h-7 hover:bg-[#202737] flex items-center justify-center text-slate-400 hover:text-slate-200 flex-shrink-0" data-tip="Close">
+          <button onClick={onClose} className="ml-auto w-7 h-7 hover:bg-[#202737] flex items-center justify-center text-slate-400 hover:text-slate-200 flex-shrink-0" data-tip="Close" aria-label="Close">
             <X className="w-4 h-4" />
           </button>
         </div>

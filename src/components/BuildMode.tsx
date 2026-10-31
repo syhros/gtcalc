@@ -47,8 +47,8 @@ export function BuildMode({ steps, step, onStep, onExit, onFocus, anchor }: {
       <div className="absolute top-[52px] left-1/2 -translate-x-1/2 z-40 max-w-[92vw] flex items-center gap-2 px-3 py-1.5 bg-[#161a24]/95 border border-emerald-500/70 shadow-2xl text-[11px]" onMouseDown={(e) => e.stopPropagation()}>
         <span className="text-emerald-300 font-bold whitespace-nowrap uppercase">Build mode</span>
         <span className="text-slate-400 whitespace-nowrap">Step {step + 1} / {steps.length}</span>
-        <button onClick={() => onStep(Math.max(0, step - 1))} disabled={step === 0} className="px-1.5 py-0.5 border border-[#2b3548] text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Previous step (←)"><ChevronLeft className="w-3.5 h-3.5" /></button>
-        <button onClick={() => onStep(Math.min(steps.length - 1, step + 1))} disabled={step >= steps.length - 1} className="px-1.5 py-0.5 border border-emerald-600/70 bg-emerald-950 text-emerald-200 hover:bg-emerald-900 disabled:opacity-30" data-tip="Next step (→)"><ChevronRight className="w-3.5 h-3.5" /></button>
+        <button onClick={() => onStep(Math.max(0, step - 1))} disabled={step === 0} className="px-1.5 py-0.5 border border-[#2b3548] text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Previous step (←)" aria-label="Previous step (←)"><ChevronLeft className="w-3.5 h-3.5" /></button>
+        <button onClick={() => onStep(Math.min(steps.length - 1, step + 1))} disabled={step >= steps.length - 1} className="px-1.5 py-0.5 border border-emerald-600/70 bg-emerald-950 text-emerald-200 hover:bg-emerald-900 disabled:opacity-30" data-tip="Next step (→)" aria-label="Next step (→)"><ChevronRight className="w-3.5 h-3.5" /></button>
         <button onClick={onExit} className="px-2 py-0.5 border border-[#2b3548] text-slate-300 hover:bg-[#202737] font-bold whitespace-nowrap" data-tip="Leave build mode (Esc)">Exit build mode</button>
       </div>
 

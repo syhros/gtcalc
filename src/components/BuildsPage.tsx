@@ -85,7 +85,7 @@ function BuildsPageInner({ pack, user, tab, onTab, yourFlows, examples, onOpenFl
   const view = (b: Build, focusComments?: boolean) => setDetailOf({ id: b.id, focusComments });
   const showAuthor = (b: Build) => setDetailOf({ author: b.author, authorId: b.authorId });
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-[#11141c] text-xs">
+    <div role="main" aria-label="Community flows" className="flex-1 min-h-0 overflow-y-auto bg-[#11141c] text-xs">
       <div className="max-w-7xl mx-auto p-4 space-y-3">
         {detailOf ? (
           // A flow or a player's page: just the way back (the tabs come back with the list).
@@ -193,7 +193,7 @@ function ReportModal({ build, comment, onClose, onDone, onError }: { build: Buil
         <div className="flex items-center gap-2">
           <Flag className="w-4 h-4 text-rose-300" />
           <div className="font-bold text-sm text-slate-100 flex-1 break-words">{comment ? `Report ${comment.author}'s comment` : `Report "${build.name}"`}</div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         <label className="block space-y-1">
           <span className="text-slate-400">Reason</span>
@@ -343,19 +343,19 @@ function BuildList({ builds, user, actions, onView, onAuthor, onCount, noTop, em
           <Search className="w-3.5 h-3.5 absolute left-1.5 top-1.5 text-slate-500" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, user or output" className={`${input} pl-6 w-full`} />
         </span>
-        <input value={f.maxUse} onChange={(e) => setF({ ...f, maxUse: e.target.value })} placeholder="Max EU/t used" className={`${input} min-w-[120px]`} data-tip="Flows drawing at most this much (100, 10k, 1M)" />
-        <input value={f.minGen} onChange={(e) => setF({ ...f, minGen: e.target.value })} placeholder="Min EU/t made" className={`${input} min-w-[120px]`} data-tip="Flows generating at least this much" />
+        <input value={f.maxUse} onChange={(e) => setF({ ...f, maxUse: e.target.value })} placeholder="Max EU/t used" className={`${input} min-w-[120px]`} data-tip="Flows drawing at most this much (100, 10k, 1M)" aria-label="Flows drawing at most this much (100, 10k, 1M)" />
+        <input value={f.minGen} onChange={(e) => setF({ ...f, minGen: e.target.value })} placeholder="Min EU/t made" className={`${input} min-w-[120px]`} data-tip="Flows generating at least this much" aria-label="Flows generating at least this much" />
         <input value={f.maxMachines} onChange={(e) => setF({ ...f, maxMachines: e.target.value })} placeholder="Max machines" className={`${input} min-w-[110px]`} />
-        <select value={f.tag} onChange={(e) => setF({ ...f, tag: e.target.value })} className={input} data-tip="Only flows with this tag">
+        <select value={f.tag} onChange={(e) => setF({ ...f, tag: e.target.value })} className={input} data-tip="Only flows with this tag" aria-label="Only flows with this tag">
           <option value="">Tag: any</option>
           {FLOW_TAGS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
           <option value="example">Examples</option>
         </select>
-        <select value={f.minLow} onChange={(e) => setF({ ...f, minLow: e.target.value })} className={input} data-tip="Tiers from: flows whose lowest tier is at least this">
+        <select value={f.minLow} onChange={(e) => setF({ ...f, minLow: e.target.value })} className={input} data-tip="Tiers from: flows whose lowest tier is at least this" aria-label="Tiers from: flows whose lowest tier is at least this">
           <option value="">Tiers from: any</option>
           {TIER_ORDER.map((t) => <option key={t} value={t}>Tiers from: {t}</option>)}
         </select>
-        <select value={f.maxTop} onChange={(e) => setF({ ...f, maxTop: e.target.value })} className={input} data-tip="To: flows whose highest tier is at most this">
+        <select value={f.maxTop} onChange={(e) => setF({ ...f, maxTop: e.target.value })} className={input} data-tip="To: flows whose highest tier is at most this" aria-label="To: flows whose highest tier is at most this">
           <option value="">To: any</option>
           {TIER_ORDER.map((t) => <option key={t} value={t}>To: {t}</option>)}
         </select>
@@ -627,7 +627,7 @@ function EditDetailsModal({ build, onClose, onError }: { build: Build; onClose: 
       <div className="w-[460px] max-w-full bg-[#161a24] border border-[#2b3548] shadow-2xl p-4 space-y-3 text-xs" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="font-bold text-sm text-slate-100">Edit shared flow</div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         <label className="block space-y-1">
           <span className="text-slate-400">Name</span>
@@ -756,9 +756,9 @@ function SimpleTree({ build, machines }: { build: Build; machines: Map<string, n
   return (
     <div className="relative">
     <div className="absolute right-2 top-2 z-10 flex items-center gap-1 text-[11px]">
-      <button onClick={() => zoomBy(1 / 1.25)} className={zbtn} data-tip="Zoom out"><Minus className="w-3.5 h-3.5" /></button>
+      <button onClick={() => zoomBy(1 / 1.25)} className={zbtn} data-tip="Zoom out" aria-label="Zoom out"><Minus className="w-3.5 h-3.5" /></button>
       <button onClick={() => setZoom(1)} className={`${zbtn} !w-auto px-1.5 font-bold`} data-tip="Fit">{Math.round(zoom * 100)}%</button>
-      <button onClick={() => zoomBy(1.25)} className={zbtn} data-tip="Zoom in"><Plus className="w-3.5 h-3.5" /></button>
+      <button onClick={() => zoomBy(1.25)} className={zbtn} data-tip="Zoom in" aria-label="Zoom in"><Plus className="w-3.5 h-3.5" /></button>
     </div>
     <div
       ref={box}
