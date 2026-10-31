@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, initializeFirestore, persistentLocalCache, type Firestore } from 'firebase/firestore';
 
@@ -50,10 +50,11 @@ export function startAppCheck() {
   if (appCheckStarted || !app) return;
   appCheckStarted = true;
   const recaptcha = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
-  // Not on localhost: the reCAPTCHA key is registered for the live site (use an App Check debug
-  // token for local development once enforcement is on).
+  // The Enterprise provider: App Check no longer takes new reCAPTCHA v3 registrations, and the
+  // key is an Enterprise key. Not on localhost: the key is registered for the live site (use an
+  // App Check debug token for local development once enforcement is on).
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
-  if (recaptcha && !local) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(recaptcha), isTokenAutoRefreshEnabled: true });
+  if (recaptcha && !local) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(recaptcha), isTokenAutoRefreshEnabled: true });
 }
 
 /** Auth and the database, for a call about to reach Firebase (so App Check starts first). */
