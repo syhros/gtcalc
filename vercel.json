@@ -20,7 +20,7 @@
       ]
     },
     {
-      "source": "/data/(recipes|recipes-base|recipes-gtnh|recipes-(base|skygreg|gtnh)-[0-9]+).json",
+      "source": "/data/(recipes|recipes-base|recipes-gtnh|recipes-base-[0-9]+|recipes-skygreg-[0-9]+|recipes-gtnh-[0-9]+).json",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
