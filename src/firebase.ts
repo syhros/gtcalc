@@ -30,13 +30,6 @@ let db: Firestore | null = null;
 
 if (firebaseEnabled) {
   app = getApps().length ? getApp() : initializeApp(config as Record<string, string>);
-  // App Check (optional): proves requests come from this site, not a script. Turned on by
-  // setting VITE_RECAPTCHA_SITE_KEY; enforce it in the Firebase console once it's live.
-  const recaptcha = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
-  // Not on localhost: the reCAPTCHA key is registered for the live site (use an App Check debug
-  // token for local development once enforcement is on).
-  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
-  if (recaptcha && !local) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(recaptcha), isTokenAutoRefreshEnabled: true });
   auth = getAuth(app);
   // Cache documents in the browser so builds and comments load instantly on repeat visits.
   try {
@@ -46,7 +39,32 @@ if (firebaseEnabled) {
   }
 }
 
+let appCheckStarted = false;
+/**
+ * App Check (optional): proves requests come from this site, not a script. Turned on by setting
+ * VITE_RECAPTCHA_SITE_KEY; enforce it in the Firebase console once it's live. It loads Google
+ * reCAPTCHA, so it starts on the first call that talks to Firebase (signing in, Community,
+ * sharing, a signed-in visitor's sync), never on a visit that only uses the calculator.
+ */
+export function startAppCheck() {
+  if (appCheckStarted || !app) return;
+  appCheckStarted = true;
+  const recaptcha = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
+  // Not on localhost: the reCAPTCHA key is registered for the live site (use an App Check debug
+  // token for local development once enforcement is on).
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+  if (recaptcha && !local) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(recaptcha), isTokenAutoRefreshEnabled: true });
+}
+
+/** Auth and the database, for a call about to reach Firebase (so App Check starts first). */
 export function fb() {
+  if (!auth || !db) throw new Error('The community server is not configured');
+  startAppCheck();
+  return { auth, db };
+}
+
+/** The same, without starting App Check: for listeners that send nothing until someone signs in. */
+export function fbIdle() {
   if (!auth || !db) throw new Error('The community server is not configured');
   return { auth, db };
 }

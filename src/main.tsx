@@ -1,4 +1,10 @@
 import { createRoot } from 'react-dom/client'
+// Fonts are bundled with the app (no request to Google Fonts): the weights the app uses.
+import '@fontsource/silkscreen/400.css'
+import '@fontsource/vt323/400.css'
+import '@fontsource/jetbrains-mono/400.css'
+import '@fontsource/jetbrains-mono/600.css'
+import '@fontsource/jetbrains-mono/700.css'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './ErrorBoundary'

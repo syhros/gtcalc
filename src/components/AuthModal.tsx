@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { claimUsername, communityEnabled, login, loginWithGoogle, register, renameUsername, resetPassword } from '../community';
+import { startAppCheck } from '../firebase';
 
 /** Log in or make an account: username and password, with an optional email for resets. */
 export function AuthModal({ reason, onDone, onClose, pickUsername, rename }: { reason?: string; onDone: () => void; onClose: () => void; pickUsername?: boolean; rename?: boolean }) {
@@ -10,6 +11,8 @@ export function AuthModal({ reason, onDone, onClose, pickUsername, rename }: { r
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // reCAPTCHA (App Check) loads while the form is filled in, not on the first visit to the site.
+  useEffect(() => { if (communityEnabled) startAppCheck(); }, []);
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +53,7 @@ export function AuthModal({ reason, onDone, onClose, pickUsername, rename }: { r
               </button>
             ))}
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         {!communityEnabled && <div className="text-amber-300">The community server isn't connected in this build, so accounts are unavailable.</div>}
         {reason && <div className="text-amber-300/90">{reason}</div>}

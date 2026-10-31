@@ -7,7 +7,7 @@ import {
   runTransaction, serverTimestamp, setDoc, updateDoc, deleteField, where, writeBatch, type Timestamp,
 } from 'firebase/firestore';
 import type { CanvasNode, Connection } from './types';
-import { fb, firebaseEnabled } from './firebase';
+import { fb, fbIdle, firebaseEnabled, startAppCheck } from './firebase';
 import { cleanFlow } from './flowShape';
 import { REVIEW_SCORE, assertClean, assertCleanText, assertCleanUsername, textScore, usernameScore } from './moderation';
 
@@ -143,9 +143,10 @@ export function onUserChange(fn: (u: User | null) => void) {
 const setUser = (u: User | null) => { user = u; userListeners.forEach((fn) => fn(u)); };
 
 if (firebaseEnabled) {
-  const { auth, db } = fb();
+  const { auth, db } = fbIdle(); // a visitor who never signs in never loads App Check
   onAuthStateChanged(auth, async (fu) => {
     if (!fu) { setUser(null); return; }
+    startAppCheck(); // signed in: profile, sync and shared builds are about to load
     // Right after sign-up the profile may not be written yet: wait for it briefly.
     let data: Record<string, unknown> | undefined;
     const viaGoogle = fu.providerData.some((p) => p.providerId === 'google.com');

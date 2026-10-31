@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy · gtcalc</title>
   <meta name="description" content="What gtcalc collects, why, who processes it, and the choices you have." />
+  <link rel="canonical" href="https://gtcalc.app/privacy" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="/fonts/silkscreen.css" />
   <link rel="stylesheet" href="/legal.css" />
 </head>
 <body>
@@ -18,7 +18,7 @@
   </header>
   <main>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated 4 October 2026</p>
+    <p class="updated">Last updated 31 October 2026</p>
 
     <p>gtcalc (<a href="https://gtcalc.app">gtcalc.app</a>) is a free calculator for planning GregTech production lines. This page explains what we collect, why, who handles it for us, and what you can do about it. We don't show ads, we don't sell your data, and we don't track you across other sites.</p>
 
@@ -35,6 +35,7 @@
       <tr><td>Comments, votes, favourites and copies</td><td>When you use them</td><td>To show them on flows. Comments show your username.</td></tr>
       <tr><td>Reports you send</td><td>When you report a flow or comment</td><td>So moderators can review it. Only moderators see reports.</td></tr>
       <tr><td>Anonymous visit statistics: page, referring site, country, device and browser type, and page speed</td><td>Only if you press Accept on the cookie banner</td><td>To see how the site is used and how fast it loads (Vercel Web Analytics and Speed Insights). These use no cookies and can't identify you.</td></tr>
+      <tr><td>Device and browser signals checked by Google reCAPTCHA</td><td>Only when you sign in, make an account, open Community or share a flow (never when you only use the calculator)</td><td>To check that requests to our database come from this site and not from a bot (Firebase App Check). See "Google reCAPTCHA" below.</td></tr>
       <tr><td>IP address and basic request details</td><td>On every visit</td><td>Our hosting provider keeps short-lived server logs for security and to keep the site running.</td></tr>
     </table>
 
@@ -46,10 +47,14 @@
     <ul>
       <li><strong>Google Firebase</strong> (Authentication and Firestore database): accounts, saved and shared flows, comments and votes. Database stored in London (europe-west2).</li>
       <li><strong>Vercel</strong>: hosts the website, runs the link previews, and provides Web Analytics and Speed Insights.</li>
-      <li><strong>Google Fonts</strong>: the fonts load from Google's servers, so Google sees your IP address when the page loads.</li>
+      <li><strong>Google reCAPTCHA</strong>: protects accounts and Community from abuse (see below).</li>
       <li><strong>Cloudflare</strong>: runs the domain's DNS.</li>
     </ul>
+    <p>The fonts are served from gtcalc.app itself, so loading a page doesn't contact any font provider.</p>
     <p>Some of these providers may process data outside the UK and EU. They do so under their standard data protection terms (such as the UK International Data Transfer Addendum and the EU Standard Contractual Clauses).</p>
+
+    <h2>Google reCAPTCHA</h2>
+    <p>Accounts and Community are protected by reCAPTCHA v3, through Firebase App Check. It loads only once you use them: when you open the sign-in window, Community or sharing, or come back while signed in. Using the calculator on its own never loads it. reCAPTCHA collects hardware and software information, such as device and browser data, and sends it to Google to tell people from bots. It shows no puzzle and sets no advertising cookies for us. The <a href="https://policies.google.com/privacy">Google Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply. We use it to keep the service secure (legitimate interests), and it is needed for the account features you choose to use.</p>
 
     <h2>Moderation</h2>
     <p>To keep Community friendly, usernames, flow names, descriptions and comments are checked automatically for offensive words, and some go to a moderator for review. Moderators can remove content and rename usernames that break the <a href="/terms">Terms</a>.</p>

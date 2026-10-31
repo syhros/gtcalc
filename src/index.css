@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&family=JetBrains+Mono:wght@400;600;700&display=swap');
 /* Only the app code has class names: skip public/ (the GTNH recipe file alone is 47 MB). */
 @import "tailwindcss" source(".");
 
