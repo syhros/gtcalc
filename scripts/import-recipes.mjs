@@ -20,6 +20,7 @@ import { ZipFile } from './lib/zip.mjs';
 import { averagePngColor } from './lib/png.mjs';
 import { runKubeJS } from './lib/kubejs-sandbox.mjs';
 import { BUILTIN_RECIPES } from './data/builtin-gtceu-recipes.mjs';
+import { readRecipes, writePacked } from './lib/pack-recipes.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(here, '..');
@@ -610,7 +611,7 @@ function importExport() {
   const xTags = X('tags.json');
   console.log(`Export:   ${exportDir} (${manifest.pack}, ${manifest.generator}, ${manifest.generatedAt})`);
   const prevFile = path.join(outDir, 'data', 'recipes.json');
-  const prev = profile === 'skygreg' && fs.existsSync(prevFile) ? JSON.parse(fs.readFileSync(prevFile, 'utf8')) : null;
+  const prev = profile === 'skygreg' && fs.existsSync(prevFile) ? readRecipes(path.join(outDir, 'data'), 'recipes') : null;
 
   for (const i of xItems) {
     if (i.name) exportItemNames.set(i.id, clean(i.name));
@@ -1439,8 +1440,10 @@ const out = {
   items,
   recipes,
 };
-const outFile = path.join(outDir, 'data', profile === 'base' ? 'recipes-base.json' : 'recipes.json');
-fs.writeFileSync(outFile, JSON.stringify(out));
+// Compact and split (scripts/lib/pack-recipes.mjs): about half the size once decoded.
+const outName = profile === 'base' ? 'recipes-base' : 'recipes';
+const outFile = path.join(outDir, 'data', `${outName}.json`);
+const outSizes = writePacked(path.join(outDir, 'data'), outName, out, profile === 'base' ? { parts: 2 } : { parts: 3, partName: 'recipes-skygreg' });
 // Small summary per profile for the app's modpack menu (recipe counts without loading 12 MB).
 {
   const packsFile = path.join(outDir, 'data', 'packs.json');
@@ -1450,6 +1453,6 @@ fs.writeFileSync(outFile, JSON.stringify(out));
   fs.writeFileSync(packsFile, JSON.stringify(packs, null, 2));
 }
 console.log(`Wrote ${recipes.length} recipes, ${Object.keys(items).length} items, ${Object.keys(machines).length} machine types`);
-console.log(`  -> ${path.relative(rootDir, outFile)} (${(fs.statSync(outFile).size / 1024).toFixed(0)} KB)`);
+console.log(`  -> ${path.relative(rootDir, outFile)} and ${outSizes.length - 1} parts (${outSizes.map((b) => (b / 1024).toFixed(0)).join(' + ')} KB)`);
 console.log(`  -> ${[...copiedTextures.values()].filter(Boolean).length} textures in ${path.relative(rootDir, texturesOut)}`);
 if (kjs.autoGlobals.length) console.log(`  (mocked unknown KubeJS globals: ${kjs.autoGlobals.join(', ')})`);

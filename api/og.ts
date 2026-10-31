@@ -202,5 +202,5 @@ export async function GET(req: Request): Promise<Response> {
     !nodes.length && box({ margin: 'auto', fontFamily: PIXEL, fontSize: 26, color: '#475569' }, 'PLAN GREGTECH LINES'),
   );
   const card = box({ width: '100%', height: '100%', background: '#11141c', color: '#e2e8f0', padding: 44, border: '8px solid #22d3ee', fontFamily: TEXT }, left, map);
-  return new ImageResponse(card as never, { width: 1200, height: 630, fonts: fontList, headers: { 'Cache-Control': 'public, max-age=600, s-maxage=3600' } });
+  return new ImageResponse(card as never, { width: 1200, height: 630, fonts: fontList, headers: { 'cache-control': 'public, max-age=600, s-maxage=3600' } }); // lowercase: replaces @vercel/og's own year-long default instead of adding a second value
 }

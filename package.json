@@ -14,6 +14,9 @@
     "test:rules": "npx -y firebase-tools@15.34.0 emulators:exec --only firestore --project demo-gtcalc \"vitest run tests/rules\""
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/silkscreen": "^5.3.0",
+    "@fontsource/vt323": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/og": "^0.8.6",

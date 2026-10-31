@@ -64,7 +64,8 @@ async function accessToken(sa: SA) {
 async function post<T>(url: string, body: unknown, bearer?: string): Promise<{ ok: boolean; status: number; j: T & { error?: { message?: string } } }> {
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) },
+    // The browser API key only accepts gtcalc.app as the referrer (Google Cloud key restrictions).
+    headers: { 'content-type': 'application/json', referer: 'https://gtcalc.app/', ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(5000),
   });

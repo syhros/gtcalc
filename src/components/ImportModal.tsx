@@ -10,7 +10,7 @@ export function ImportModal({ onFiles, onClose }: { onFiles: (files: File[]) => 
       <div className="w-[480px] max-w-full bg-[#161a24] border border-[#2b3548] shadow-2xl p-4 space-y-3 text-xs" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="font-bold text-sm text-slate-100">Import flows</div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         <button
           type="button"

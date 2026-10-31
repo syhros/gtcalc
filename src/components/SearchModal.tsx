@@ -702,7 +702,7 @@ function ItemRecipes({ item, side, onSide, recipes, db, onSelect, onAddSupply, o
         <div className="min-w-0 flex-1">
           <div className="text-slate-100 font-bold text-sm break-words min-w-0">{item.group ?? item.name}</div>
           {item.group && onVariant ? (
-            <select value={item.id} onChange={(e) => { const v = db.groups.get(item.group!)?.find((x) => x.id === e.target.value); if (v) onVariant(v); }} className="mt-0.5 max-w-full bg-[#12151e] border border-fuchsia-500/50 text-fuchsia-200 text-[11px] px-1 py-0.5" data-tip="Which type: each has its own recipes">
+            <select value={item.id} onChange={(e) => { const v = db.groups.get(item.group!)?.find((x) => x.id === e.target.value); if (v) onVariant(v); }} className="mt-0.5 max-w-full bg-[#12151e] border border-fuchsia-500/50 text-fuchsia-200 text-[11px] px-1 py-0.5" data-tip="Which type: each has its own recipes" aria-label="Which type: each has its own recipes">
               {(db.groups.get(item.group) ?? []).map((v) => <option key={v.id} value={v.id}>{v.variant}</option>)}
             </select>
           ) : <div className="text-[10px] text-slate-500 break-words min-w-0">{item.id}</div>}
@@ -918,7 +918,7 @@ function GenOptions({ db, variants, gen, opts, setOpts, stats, generatesEU, stac
           value={gen.variantId}
           onChange={(e) => setOpts({ ...opts, variantId: e.target.value })}
           className="bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px] max-w-full"
-          data-tip="Machine burning this fuel"
+          data-tip="Machine burning this fuel" aria-label="Machine burning this fuel"
         >
           {variants.map((v) => <option key={v.id} value={v.id}>{v.kind === 'single' ? `${v.name} (LV-${v.maxTier})` : v.kind === 'boiler' ? `${v.name} (${compact(v.steamPerTick ?? 0)} steam/t)` : `${v.name} (${v.tier})`}</option>)}
         </select>
@@ -934,7 +934,7 @@ function GenOptions({ db, variants, gen, opts, setOpts, stats, generatesEU, stac
           value={gen.rotor?.id}
           onChange={(e) => setOpts({ ...opts, rotorId: e.target.value })}
           className="bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px] max-w-full"
-          data-tip="Turbine rotor"
+          data-tip="Turbine rotor" aria-label="Turbine rotor"
         >
           {db.rotors.map((r) => <option key={r.id} value={r.id}>{r.name} rotor — {r.power}% pwr / {r.efficiency}% eff</option>)}
         </select>

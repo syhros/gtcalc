@@ -25,6 +25,7 @@ import { DEFAULT_EXPORT, EXPORT_SIZES, type ExportOptions } from './exportOption
 import { AuthModal, BuildsPage, Guide, ImportModal, ModerationModal, ProfileModal, SearchModal, ShareBuildModal, SuggestPackModal } from './lazy';
 import { UnitsToggles } from './components/UnitsPicker';
 import { ConsentBanner } from './components/ConsentBanner';
+import { useConsent } from './consent';
 import { MachineIcon } from './components/MachineIcon';
 import { ItemIcon } from './components/ItemIcon';
 import { HoverInfo, WireInfo } from './components/HoverInfo';
@@ -510,6 +511,7 @@ export function App() {
     if (url.href !== location.href) window.history.replaceState(null, '', url);
   }, []);
   useEffect(() => { if (page !== 'builds') showFlowInUrl(null); }, [page, showFlowInUrl]);
+  const consent = useConsent(); // null until the cookie banner is answered
   // Phones only view flows: cards can't be dragged, linked or changed (pan and pinch still work).
   const [viewOnly, setViewOnly] = useState(() => window.matchMedia(PHONE).matches);
   useEffect(() => {
@@ -3248,6 +3250,7 @@ export function App() {
     <div className={`flex flex-col h-screen w-screen bg-[#11141c] text-slate-100 select-none overflow-clip ${pixelFont ? 'pixel-font-all' : 'font-mono'}`} onContextMenu={(e) => e.preventDefault()}>
       {/* TOP BAR */}
       <header className="h-11 border-b border-[#252c3d] bg-[#161a24] px-2 md:px-3 flex items-center justify-between z-40 relative flex-shrink-0 text-xs gap-2 md:gap-3 whitespace-nowrap">
+        <h1 className="sr-only">gtcalc: GregTech calculator and factory planner</h1>
         <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
           <div className="flex items-center gap-1.5 font-bold text-slate-200 uppercase tracking-wider text-xs flex-shrink-0">
             <img src="/favicon.svg" alt="gtcalc" className="w-7 h-7 flex-shrink-0" style={{ imageRendering: 'pixelated' }} />
@@ -3275,7 +3278,7 @@ export function App() {
             <button
               onClick={openGuide}
               className="h-7 hidden md:flex items-center gap-1.5 px-2.5 bg-fuchsia-950/70 hover:bg-fuchsia-900/70 border border-fuchsia-500/70 text-fuchsia-200 text-xs font-bold normal-case tracking-normal"
-              data-tip="Guide: how everything works"
+              data-tip="Guide: how everything works" aria-label="Guide"
             >
               <BookOpen className="w-3.5 h-3.5" /> <span className={navLabel}>Guide</span>
             </button>
@@ -3283,7 +3286,7 @@ export function App() {
               <button
                 onClick={() => setPage('canvas')}
                 className="h-7 flex items-center gap-1 px-2 sm:px-2.5 border text-xs font-bold normal-case tracking-normal bg-[#1b2230] hover:bg-[#253147] border-cyan-500/50 text-cyan-200"
-                data-tip="Back to your flow on the canvas"
+                data-tip="Back to your flow on the canvas" aria-label="Back to flow"
               >
                 <ChevronLeft className="w-3.5 h-3.5" /> <span className="sm:hidden">Flow</span><span className="hidden sm:inline">Back to flow</span>
               </button>
@@ -3295,7 +3298,7 @@ export function App() {
                   key={t}
                   onClick={() => { exitView(); setLinkedFlow(null); setBuildsTab(t); setPage('builds'); setNavKey((k) => k + 1); }}
                   className={`h-7 flex items-center gap-1.5 px-2 sm:px-2.5 border text-xs font-bold normal-case tracking-normal ${on ? 'bg-pink-900/80 border-pink-300 text-pink-100' : 'bg-pink-950/60 hover:bg-pink-900/60 border-pink-500/60 text-pink-200'}`}
-                  data-tip={tip}
+                  data-tip={tip} aria-label={label}
                 >
                   <Icon className="w-3.5 h-3.5" /> <span className={navLabel}>{label}</span>
                 </button>
@@ -3349,21 +3352,21 @@ export function App() {
               onClick={() => setAutoLock((v) => !v)}
               disabled={manualCounts}
               className={`flex items-center px-1.5 border border-l-0 border-cyan-500/40 transition disabled:opacity-40 disabled:pointer-events-auto ${autoLock ? 'bg-cyan-800/70 text-cyan-100' : 'bg-[#161e2c] text-cyan-400/70 hover:bg-[#223048] hover:text-cyan-200'}`}
-              data-tip={manualCounts ? 'Off while Manual counts is on (top left of the canvas)' : autoLock ? 'Unlock Auto Ratio' : 'Lock on: rerun Auto Ratio after every change'}
+              data-tip={manualCounts ? 'Off while Manual counts is on (top left of the canvas)' : autoLock ? 'Unlock Auto Ratio' : 'Lock on: rerun Auto Ratio after every change'} aria-label="Lock Auto Ratio" aria-pressed={autoLock}
             >
               {autoLock ? <Lock className="w-3 h-3" /> : <LockOpen className="w-3 h-3" />}
             </button>
           </span>
-          <button onClick={handleMaxFlow} data-tip="Max Flow: raise the target as far as your limits allow" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#26201a] hover:bg-[#382d22] text-amber-300 border border-amber-500/40 text-xs font-bold transition">
+          <button onClick={handleMaxFlow} data-tip="Max Flow: raise the target as far as your limits allow" aria-label="Max Flow" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#26201a] hover:bg-[#382d22] text-amber-300 border border-amber-500/40 text-xs font-bold transition">
             <TripleChevron className="w-4 h-3.5" />{wide && <span>Max Flow</span>}
           </button>
-          <button onClick={handleAutoConnect} data-tip="Link every input to the machines that make it" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#19262e] hover:bg-[#20343f] text-emerald-300 border border-emerald-500/40 text-xs font-bold transition">
+          <button onClick={handleAutoConnect} data-tip="Link every input to the machines that make it" aria-label="Auto Connect" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#19262e] hover:bg-[#20343f] text-emerald-300 border border-emerald-500/40 text-xs font-bold transition">
             <Link2 className="w-3.5 h-3.5" />{wide && <span>Auto Connect</span>}
           </button>
-          <button onClick={handleClearLinks} disabled={!connections.length} data-tip="Remove every link" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#261a1e] hover:bg-[#3a2229] text-rose-300 border border-rose-500/40 text-xs font-bold transition disabled:opacity-40">
+          <button onClick={handleClearLinks} disabled={!connections.length} data-tip="Remove every link" aria-label="Clear links" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#261a1e] hover:bg-[#3a2229] text-rose-300 border border-rose-500/40 text-xs font-bold transition disabled:opacity-40">
             <Unlink className="w-3.5 h-3.5" />{wide && <span>Clear links</span>}
           </button>
-          <button onClick={handleRemoveNoDemand} disabled={!noDemandIds.size} data-tip={noDemandIds.size ? `Remove ${noDemandIds.size} unused machine${noDemandIds.size === 1 ? '' : 's'} (greyed out)` : 'Every machine is in use'} className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#261a1e] hover:bg-[#3a2229] text-rose-300 border border-rose-500/40 text-xs font-bold transition disabled:opacity-40 whitespace-nowrap">
+          <button onClick={handleRemoveNoDemand} disabled={!noDemandIds.size} data-tip={noDemandIds.size ? `Remove ${noDemandIds.size} unused machine${noDemandIds.size === 1 ? '' : 's'} (greyed out)` : 'Every machine is in use'} aria-label="Remove unused" className="hidden md:flex flex-shrink-0 items-center gap-1 px-2.5 py-1 bg-[#261a1e] hover:bg-[#3a2229] text-rose-300 border border-rose-500/40 text-xs font-bold transition disabled:opacity-40 whitespace-nowrap">
             <Trash2 className="w-3.5 h-3.5" />{wide && <span>Remove unused</span>}{noDemandIds.size ? ` ${noDemandIds.size}` : ''}
           </button>
           </>)}
@@ -3377,7 +3380,7 @@ export function App() {
           <div className="hidden md:flex h-7">
             <button
               onClick={handleNewFlow}
-              data-tip="Start a new, empty flow"
+              data-tip="Start a new, empty flow" aria-label="New flow"
               className="flex items-center gap-1 px-2 py-1 bg-[#1a202c] hover:bg-[#252f40] text-slate-200 border border-[#2b3548] text-xs font-bold transition"
             >
               <Plus className="w-3.5 h-3.5" /> <span className="hidden 2xl:inline">New flow</span>
@@ -3385,7 +3388,7 @@ export function App() {
             {/* Save / Saved: saving is manual; the canvas itself survives a refresh either way */}
             <button
               onClick={handleQuickSave}
-              data-tip={dirty ? (currentSave && !currentSave.draft ? `Save changes to "${currentSave.name}" (Ctrl+S; Ctrl+Shift+S saves a copy)` : 'Save this flow under a name (Ctrl+S)') : 'Everything is saved'}
+              data-tip={dirty ? (currentSave && !currentSave.draft ? `Save changes to "${currentSave.name}" (Ctrl+S; Ctrl+Shift+S saves a copy)` : 'Save this flow under a name (Ctrl+S)') : 'Everything is saved'} aria-label={dirty ? 'Save' : 'Saved'}
               className={`relative -ml-px flex items-center gap-1 px-2.5 py-1 border text-xs font-bold transition ${dirty ? 'bg-emerald-800 hover:bg-emerald-700 text-white border-emerald-400' : 'bg-[#16221c] text-emerald-300/80 border-emerald-500/70'}`}
             >
               <Save className="w-3.5 h-3.5" /> <span className="hidden 2xl:inline">{dirty ? 'Save' : 'Saved'}</span>
@@ -3396,14 +3399,14 @@ export function App() {
             <button
               onClick={() => setImportOpen(true)}
               className="flex items-center gap-1 px-2.5 py-1 bg-[#1c2638] hover:bg-[#253550] text-sky-300 border border-sky-500/40 text-xs font-bold transition"
-              data-tip="Import .json flows (ours or GTNH Planner)"
+              data-tip="Import .json flows (ours or GTNH Planner)" aria-label="Import"
             >
               <Upload className="w-3.5 h-3.5" /> <span className="hidden 2xl:inline">Import</span>
             </button>
             <button
               onClick={() => setExportMenu((v) => !v)}
               className="flex items-center gap-1 px-2 py-1 bg-[#18202f] hover:bg-[#253550] text-sky-300/90 border border-l-0 border-sky-500/40 text-xs font-bold transition"
-              data-tip="Export this flow as a file or an image"
+              data-tip="Export this flow as a file or an image" aria-label="Export"
             >
               <Download className="w-3.5 h-3.5" /> <span className="hidden 2xl:inline">Export</span> <ChevronDown className="w-3 h-3" />
             </button>
@@ -3445,7 +3448,7 @@ export function App() {
           <button
             onClick={handleShareLink}
             className="hidden md:flex flex-shrink-0 h-7 items-center gap-1 px-2.5 py-1 bg-pink-950/60 hover:bg-pink-900/60 text-pink-200 border border-pink-500/50 text-xs font-bold transition"
-            data-tip={currentSave && sharedFlowIds.has(currentSave.id) ? 'Copy the link to this flow on Community' : 'Share this flow to Community and copy its link'}
+            data-tip={currentSave && sharedFlowIds.has(currentSave.id) ? 'Copy the link to this flow on Community' : 'Share this flow to Community and copy its link'} aria-label="Share"
           >
             <Share2 className="w-3.5 h-3.5" /> <span className="hidden 2xl:inline">Share</span>
           </button>
@@ -3499,7 +3502,7 @@ export function App() {
             </Dropdown>
           </span>
           <span className="relative">
-            <button onClick={() => { setPanelHint(false); setSidebarOpen((v) => !v); }} className={`p-1.5 bg-[#1b2230] hover:bg-[#253147] text-cyan-300 border transition h-7 flex items-center justify-center ${panelHint ? 'border-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'border-cyan-500/40'}`} data-tip="Side panel: balances, machines, saves">
+            <button onClick={() => { setPanelHint(false); setSidebarOpen((v) => !v); }} className={`p-1.5 bg-[#1b2230] hover:bg-[#253147] text-cyan-300 border transition h-7 flex items-center justify-center ${panelHint ? 'border-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'border-cyan-500/40'}`} data-tip="Side panel: balances, machines, saves" aria-label="Side panel: balances, machines, saves">
               <Menu className="w-4 h-4" />
             </button>
             {panelHint && (
@@ -3515,7 +3518,7 @@ export function App() {
             <button
               onClick={() => setProfileOpen(true)}
               className={`h-7 w-7 flex items-center justify-center border transition ${user ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300' : 'bg-[#1b2230] border-[#2b3548] text-slate-300 hover:text-cyan-300'}`}
-              data-tip={user ? `${user.username}: profile and saved flows` : 'Profile and saved flows (log in to sync and share)'}
+              data-tip={user ? `${user.username}: profile and saved flows` : 'Profile and saved flows (log in to sync and share)'} aria-label={user ? `Profile: ${user.username}` : 'Profile'}
             >
               <PixelIcon name="user" className="w-4 h-4" />
               {unread > 0 && (
@@ -3570,6 +3573,8 @@ export function App() {
       {/* CANVAS (hidden, so not drawn, while the Builds page is open) */}
       <div
         ref={canvasRef}
+        role="main"
+        aria-label="Flow canvas"
         className={`flex-1 relative blueprint-grid overflow-clip ${viewOnly || viewing || building ? 'view-only' : ''} ${page === 'builds' ? 'hidden' : ''} ${panning ? 'cursor-grabbing' : selectMode && !spaceMove ? 'cursor-crosshair' : 'cursor-grab'} ${panning || draggingNodeId ? 'wires-still' : ''} ${flowAnim ? 'flow-anim' : ''}`}
         style={{ backgroundSize: `${26 * zoom}px ${26 * zoom}px`, backgroundPosition: `${viewPan.x}px ${viewPan.y}px`, touchAction: 'none' }}
         onWheel={onWheel}
@@ -3598,7 +3603,7 @@ export function App() {
               value=""
               onChange={(e) => { if (e.target.value) bulkTier(e.target.value as VoltageTier); }}
               className="bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5"
-              data-tip="Set every selected machine to this tier (not below its base tier)"
+              data-tip="Set every selected machine to this tier (not below its base tier)" aria-label="Set every selected machine to this tier (not below its base tier)"
             >
               <option value="">Set tier…</option>
               {TIER_ORDER.slice(0, TIER_ORDER.indexOf(maxTier) + 1).map((t) => <option key={t} value={t}>{t}</option>)}
@@ -3610,11 +3615,12 @@ export function App() {
             <button onClick={bulkMaxFlow} className="px-1.5 py-0.5 border border-amber-600/50 text-amber-300 hover:bg-amber-950 font-bold" data-tip="Pin each selected machine to the most its linked inputs can feed">Max flow</button>
             <button onClick={copySelection} className="px-1.5 py-0.5 border border-[#2b3548] text-slate-200 hover:bg-[#202737]" data-tip="Copy (Ctrl+C), paste with Ctrl+V">Copy</button>
             <button onClick={bulkDelete} className="px-1.5 py-0.5 border border-rose-600/50 text-rose-300 hover:bg-rose-950 font-bold" data-tip="Delete the selected nodes (Delete key)">Delete</button>
-            <button onClick={() => setSelected(new Set())} className="px-1 text-slate-400 hover:text-slate-100" data-tip="Clear the selection (Esc)"><X className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setSelected(new Set())} className="px-1 text-slate-400 hover:text-slate-100" data-tip="Clear the selection (Esc)" aria-label="Clear the selection (Esc)"><X className="w-3.5 h-3.5" /></button>
           </div>
         )}
         {nodes.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+          // Until the cookie choice is made, its banner covers the bottom of a phone screen: sit above it.
+          <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none ${consent === null ? 'pb-48 md:pb-0' : ''}`}>
             <div className="bg-[#161a24]/95 border-2 border-cyan-500/50 p-6 flex flex-col items-center gap-3 shadow-2xl pointer-events-auto" onMouseDown={(e) => e.stopPropagation()}>
               {viewOnly ? (
                 // Phones only view flows, so the way in is Community, My flows and the Guide.
@@ -3945,7 +3951,7 @@ export function App() {
           <button
             onClick={() => setShowHelp((v) => !v)}
             className="build-hide flex items-center justify-center px-2 py-1 bg-[#161a24]/95 hover:bg-[#202737] border border-[#2b3548] text-slate-300"
-            data-tip={showHelp ? 'Hide the controls help' : 'Show the controls help'}
+            data-tip={showHelp ? 'Hide the controls help' : 'Show the controls help'} aria-label={showHelp ? 'Hide the controls help' : 'Show the controls help'} aria-expanded={showHelp}
           >
             {showHelp ? <PixelIcon name="down" className="w-3 h-[7px]" /> : <PixelIcon name="up" className="w-3 h-[7px]" />}
           </button>
@@ -3953,21 +3959,21 @@ export function App() {
             onClick={handleAutoSort}
             disabled={!nodes.length}
             className="build-hide flex items-center gap-1 px-2 py-1 bg-[#161a24]/95 hover:bg-[#202737] border border-[#2b3548] text-slate-200 font-bold disabled:opacity-40"
-            data-tip="Tidy the nodes into columns following the flow (can be undone)"
+            data-tip="Tidy the nodes into columns following the flow (can be undone)" aria-label="Auto Sort"
           >
             <LayoutGrid className="w-3.5 h-3.5 text-cyan-300" />{toolWide && <span>Auto Sort</span>}
           </button>
           <button
             onClick={() => setSnapOn((v) => !v)}
             className={`build-hide flex items-center gap-1 px-2 py-1 border font-bold ${snapOn ? 'bg-cyan-950/90 border-cyan-500/60 text-cyan-200' : 'bg-[#161a24]/95 border-[#2b3548] text-slate-400 hover:text-slate-200'}`}
-            data-tip={`Snapping ${snapOn ? 'on' : 'off'}: lines nodes up while dragging, so wires run straight`}
+            data-tip={`Snapping ${snapOn ? 'on' : 'off'}: lines nodes up while dragging, so wires run straight`} aria-label="Snap" aria-pressed={snapOn}
           >
             <Magnet className="w-3.5 h-3.5" />{toolWide && <span>Snap</span>}
           </button>
           <button
             onClick={() => setFlowAnim((v) => !v)}
             className={`flex items-center gap-1 px-2 py-1 border font-bold ${flowAnim ? 'bg-cyan-950/90 border-cyan-500/60 text-cyan-200' : 'bg-[#161a24]/95 border-[#2b3548] text-slate-400 hover:text-slate-200'}`}
-            data-tip={`Wire animation ${flowAnim ? 'on' : 'off'}. Off is smoother on big flows`}
+            data-tip={`Wire animation ${flowAnim ? 'on' : 'off'}. Off is smoother on big flows`} aria-label="Wire animation" aria-pressed={flowAnim}
           >
             <span className="relative w-3.5 h-3.5 overflow-hidden"><ArrowRight className={`absolute inset-0 w-3.5 h-3.5 ${flowAnim ? 'flow-arrow' : 'opacity-60'}`} /></span>
             {toolWide && <span>Flow</span>}
@@ -3975,7 +3981,7 @@ export function App() {
           <button
             onClick={toggleLabels}
             className={`build-hide flex items-center gap-0.5 px-2 py-1 border font-bold ${showLabels ? 'bg-rose-950/80 border-rose-500/60 text-rose-200 hover:bg-rose-900/80' : 'bg-[#161a24]/95 border-[#2b3548] text-slate-300 hover:text-slate-100'}`}
-            data-tip={showLabels ? 'Remove the Supplied / Needed labels from the wires' : 'Add Supplied / Needed labels to the wires'}
+            data-tip={showLabels ? 'Remove the Supplied / Needed labels from the wires' : 'Add Supplied / Needed labels to the wires'} aria-label="Wire labels" aria-pressed={showLabels}
           >
             {showLabels ? <Minus className="w-3 h-3" /> : <Plus className="w-3 h-3" />}<Tag className="w-3.5 h-3.5" />
           </button>
@@ -3994,18 +4000,18 @@ export function App() {
             </div>
           </div>
           <div className="build-hide flex items-center bg-[#161a24]/95 border border-[#2b3548]">
-            <button onClick={undo} disabled={!history.current.past.length} className="px-2 py-1 text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Undo (Ctrl+Z)">
+            <button onClick={undo} disabled={!history.current.past.length} className="px-2 py-1 min-h-6 text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)">
               <Undo2 className="w-3.5 h-3.5" />
             </button>
             <div className="w-px h-4 bg-[#2b3548]" />
-            <button onClick={redo} disabled={!history.current.future.length} className="px-2 py-1 text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Redo (Ctrl+Y / Ctrl+Shift+Z)">
+            <button onClick={redo} disabled={!history.current.future.length} className="px-2 py-1 min-h-6 text-slate-200 hover:bg-[#202737] disabled:opacity-30" data-tip="Redo (Ctrl+Y / Ctrl+Shift+Z)" aria-label="Redo (Ctrl+Y / Ctrl+Shift+Z)">
               <Redo2 className="w-3.5 h-3.5" />
             </button>
             <div className="w-px h-4 bg-[#2b3548]" />
             <button
               onClick={() => { setSelectMode((v) => !v); if (selectMode) setSelected(new Set()); }}
               className={`flex items-center gap-1 px-2 py-1 text-[11px] font-bold ${selectMode ? 'bg-cyan-950 text-cyan-300' : 'text-slate-200 hover:bg-[#202737]'}`}
-              data-tip={selectMode ? 'Drag a box over cards (Shift adds, Space pans, Esc stops)' : 'Select several cards (Ctrl+A selects all)'}
+              data-tip={selectMode ? 'Drag a box over cards (Shift adds, Space pans, Esc stops)' : 'Select several cards (Ctrl+A selects all)'} aria-label="Select" aria-pressed={selectMode}
             >
               <SquareDashed className="w-3.5 h-3.5" />{toolWide && <span>Select</span>}
             </button>
@@ -4030,7 +4036,7 @@ export function App() {
                 </button>
               ))}
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-[#202737] text-slate-400 hover:text-slate-200 border border-transparent hover:border-[#2b3548]" data-tip="Close the side panel"><X className="w-4 h-4" /></button>
+            <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-[#202737] text-slate-400 hover:text-slate-200 border border-transparent hover:border-[#2b3548]" data-tip="Close the side panel" aria-label="Close the side panel"><X className="w-4 h-4" /></button>
           </div>
           {sidebarTab === 'balances' && (<>
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -4255,7 +4261,7 @@ export function App() {
                       value={idx < 0 ? sliderTiers.length - 1 : idx}
                       onChange={(e) => setMaxTier(sliderTiers[Number(e.target.value)])}
                       className="w-full accent-cyan-400"
-                      data-tip="Highest tier you can build; Auto Ratio stays at or below it"
+                      data-tip="Highest tier you can build; Auto Ratio stays at or below it" aria-label="Highest tier you can build; Auto Ratio stays at or below it"
                     />
                     <div className="flex justify-between text-[9px] text-slate-500">
                       {sliderTiers.map((t) => <span key={t} style={{ color: t === maxTier ? TIERS[t].color : undefined }}>{t}</span>)}
@@ -4672,7 +4678,7 @@ export function App() {
           </span>
           <button
             onClick={() => setBudgetOn((v) => !v)}
-            className={`px-1.5 py-1 border text-[10px] font-bold leading-none flex-shrink-0 ${budgetOn ? 'border-emerald-500/60 text-emerald-300 bg-emerald-950/40' : 'border-[#2b3548] text-slate-500'}`}
+            className={`px-1.5 py-1 min-h-6 border text-[10px] font-bold leading-none flex-shrink-0 ${budgetOn ? 'border-emerald-500/60 text-emerald-300 bg-emerald-950/40' : 'border-[#2b3548] text-slate-500'}`}
             data-tip={budgetOn ? 'EU/t budget is on: Auto Ratio and Max Flow stay inside it. Click to turn it off.' : 'EU/t budget is off: nothing is limited by power. Click to turn it on.'}
           >
             BUDGET {budgetOn ? 'ON' : 'OFF'}
@@ -4683,7 +4689,7 @@ export function App() {
               unit="eu"
               display={formatEU(budget)}
               onCommit={(v) => setBudget(Math.max(0, Math.round(v)))}
-              className={eutStatus === 'danger' ? 'text-red-400' : eutStatus === 'warning' ? 'text-amber-300' : 'text-emerald-400'}
+              className={`min-h-6 ${eutStatus === 'danger' ? 'text-red-400' : eutStatus === 'warning' ? 'text-amber-300' : 'text-emerald-400'}`}
               title="Click to change the EU/t budget"
             />
           )}

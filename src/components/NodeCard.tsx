@@ -109,7 +109,7 @@ function CountInput({ value, onChange }: { value: number; onChange: (v: number) 
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur(); }}
       onMouseDown={(e) => e.stopPropagation()}
       className="w-12 h-6 bg-[#171d2b] border border-[#2c374c] text-center text-amber-300 font-bold text-xs"
-      data-tip={value >= 1000 ? `${value.toLocaleString()} machines` : undefined}
+      data-tip={value >= 1000 ? `${value.toLocaleString()} machines` : undefined} aria-label="Machine count"
     />
   );
 }
@@ -229,11 +229,11 @@ function MachineCard(props: Props) {
               </button>
             )}
             {!props.readOnly && connectedInputs.size + connectedOutputs.size > 0 && (
-              <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] hover:border-rose-500/50 flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this machine from everything">
+              <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] hover:border-rose-500/50 flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this machine from everything" aria-label="Disconnect this machine from everything">
                 <Unlink className="w-3 h-3" />
               </button>
             )}
-            {!props.readOnly && <button onClick={() => props.onChangeRecipe(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-[#2b384e] border border-[#2d3a52] flex items-center justify-center text-slate-300" data-tip="Change recipe for this machine">
+            {!props.readOnly && <button onClick={() => props.onChangeRecipe(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-[#2b384e] border border-[#2d3a52] flex items-center justify-center text-slate-300" data-tip="Change recipe for this machine" aria-label="Change recipe for this machine">
               <PixelIcon name="settings" className="w-3 h-3" />
             </button>}
             {(!props.readOnly || isTarget) && <button
@@ -243,11 +243,11 @@ function MachineCard(props: Props) {
                   ? 'bg-blue-700 border-blue-300 text-white shadow-[0_0_8px_rgba(96,165,250,0.8)]'
                   : 'bg-[#1b2230] border-[#2c374c] text-slate-400 hover:text-slate-200'
               }`}
-              data-tip={isTarget ? 'Target machine' : 'Set as target'}
+              data-tip={isTarget ? 'Target machine' : 'Set as target'} aria-label={isTarget ? 'Target machine' : 'Set as target'}
             >
               <PixelIcon name="target" className="w-3 h-3" />
             </button>}
-            {!props.readOnly && <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove machine">
+            {!props.readOnly && <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove machine" aria-label="Remove machine">
               <PixelIcon name="cross" className="w-2.5 h-2.5" />
             </button>}
           </div>
@@ -267,10 +267,10 @@ function MachineCard(props: Props) {
           <span className="text-slate-400 text-[11px]">Count:</span>
           <CountInput value={flow ? flow.machines : node.count} onChange={(v) => props.onSetCount(node, v)} />
           <div className="flex flex-col">
-            <button onClick={() => props.onSetCount(node, (flow?.machines ?? node.count) + 1)} className="w-4 h-3 bg-[#1b2333] hover:bg-[#253249] border border-[#2c3a52] flex items-center justify-center text-slate-300" data-tip="Increment count">
+            <button onClick={() => props.onSetCount(node, (flow?.machines ?? node.count) + 1)} className="w-4 h-3 bg-[#1b2333] hover:bg-[#253249] border border-[#2c3a52] flex items-center justify-center text-slate-300" data-tip="Increment count" aria-label="Increment count">
               <PixelIcon name="up" className="w-2 h-[5px]" />
             </button>
-            <button onClick={() => props.onSetCount(node, Math.max(0, (flow?.machines ?? node.count) - 1))} className="w-4 h-3 bg-[#1b2333] hover:bg-[#253249] border border-[#2c3a52] flex items-center justify-center text-slate-300" data-tip="Decrement count">
+            <button onClick={() => props.onSetCount(node, Math.max(0, (flow?.machines ?? node.count) - 1))} className="w-4 h-3 bg-[#1b2333] hover:bg-[#253249] border border-[#2c3a52] flex items-center justify-center text-slate-300" data-tip="Decrement count" aria-label="Decrement count">
               <PixelIcon name="down" className="w-2 h-[5px]" />
             </button>
           </div>
@@ -310,7 +310,7 @@ function MachineCard(props: Props) {
               value={multi && !multiVariant?.self ? multi.variantId : ''}
               onChange={(e) => props.onMultiChange?.(node, { variantId: e.target.value || null })}
               className="w-full min-w-0 bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px]"
-              data-tip="Machine running this recipe: the basic machine, or a multiblock that can run it"
+              data-tip="Machine running this recipe: the basic machine, or a multiblock that can run it" aria-label="Machine running this recipe: the basic machine, or a multiblock that can run it"
             >
               <option value="">{recipe.machineName}{recipe.multiblock ? '' : ' (single block)'}</option>
               {otherMachines.map((v) => <option key={v.id} value={v.id}>{v.name}{v.parallel ? ' (parallel hatch)' : ''}</option>)}
@@ -321,7 +321,7 @@ function MachineCard(props: Props) {
                 value={multi?.parallel ?? 1}
                 onChange={(e) => props.onMultiChange?.(node, { parallel: Number(e.target.value) })}
                 className="w-full min-w-0 bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px]"
-                data-tip="Parallel hatch: this many crafts run at once (EU/t x the same). If the tier badge has power to spare, the combined recipe also overclocks."
+                data-tip="Parallel hatch: this many crafts run at once (EU/t x the same). If the tier badge has power to spare, the combined recipe also overclocks." aria-label="Parallel hatch: this many crafts run at once (EU/t x the same). If the tier badge has power to spare, the combined recipe also overclocks."
               >
                 {PARALLEL_HATCHES.map((h) => <option key={h.parallel} value={h.parallel}>{h.name}</option>)}
               </select>
@@ -337,7 +337,7 @@ function MachineCard(props: Props) {
                 value={gen.variantId}
                 onChange={(e) => props.onGenChange(node, { variantId: e.target.value })}
                 className="w-full min-w-0 bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px]"
-                data-tip="Machine burning this fuel"
+                data-tip="Machine burning this fuel" aria-label="Machine burning this fuel"
               >
                 {genVariants.map((v) => <option key={v.id} value={v.id}>{v.kind === 'single' ? `${v.name} (LV-${v.maxTier})` : v.kind === 'boiler' ? `${v.name} (${compact(v.steamPerTick ?? 0)} steam/t)` : `${v.name} (${v.tier})`}</option>)}
               </select>
@@ -353,7 +353,7 @@ function MachineCard(props: Props) {
                 value={gen.rotor?.id}
                 onChange={(e) => props.onGenChange(node, { rotorId: e.target.value })}
                 className="w-full min-w-0 bg-[#171d2b] border border-[#2c374c] text-slate-200 px-1 py-0.5 text-[11px]"
-                data-tip="Turbine rotor: power sets max output, efficiency stretches each craft (less fuel)"
+                data-tip="Turbine rotor: power sets max output, efficiency stretches each craft (less fuel)" aria-label="Turbine rotor: power sets max output, efficiency stretches each craft (less fuel)"
               >
                 {rotors.map((r) => <option key={r.id} value={r.id}>{r.name} rotor — {r.power}% pwr / {r.efficiency}% eff</option>)}
               </select>
@@ -485,7 +485,7 @@ function MachineCard(props: Props) {
                     onClick={(e) => { e.stopPropagation(); if (out.id !== targetItemId) props.onTargetRate(node, out.id, rate); }}
                     onMouseDown={(e) => e.stopPropagation()}
                     className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center ${out.id === targetItemId ? 'bg-blue-700 border-blue-300 text-white' : 'bg-[#1b2230] border-[#2c374c] text-slate-500 hover:text-slate-200'}`}
-                    data-tip={out.id === targetItemId ? 'The target rate is for this output; the other outputs scale with it' : 'Make this output the target (keeps the current rate; click the rate to change it)'}
+                    data-tip={out.id === targetItemId ? 'The target rate is for this output; the other outputs scale with it' : 'Make this output the target (keeps the current rate; click the rate to change it)'} aria-label={out.id === targetItemId ? 'The target rate is for this output; the other outputs scale with it' : 'Make this output the target (keeps the current rate; click the rate to change it)'}
                   >
                     <PixelIcon name="target" className="w-3 h-3" />
                   </button>
@@ -547,7 +547,7 @@ function VariantPicker({ props, item }: { props: Props; item: RecipeItem | undef
         disabled={props.readOnly}
         onChange={(e) => { const v = props.variants!.find((x) => x.id === e.target.value); if (v) props.onVariant!(props.node, v); }}
         className="min-w-0 flex-1 bg-[#12151e] border border-fuchsia-500/50 text-fuchsia-200 px-1 py-0.5"
-        data-tip="Which type of this item you're using: each has its own recipes"
+        data-tip="Which type of this item you're using: each has its own recipes" aria-label="Which type of this item you're using: each has its own recipes"
       >
         {props.variants.map((v) => <option key={v.id} value={v.id}>{v.variant ?? v.name}</option>)}
       </select>
@@ -593,11 +593,11 @@ function SupplyCard(props: Props) {
         </div>
         <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
           {connected && (
-            <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this input from everything">
+            <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this input from everything" aria-label="Disconnect this input from everything">
               <Unlink className="w-3 h-3" />
             </button>
           )}
-          <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove input"><PixelIcon name="cross" className="w-2.5 h-2.5" /></button>
+          <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove input" aria-label="Remove input"><PixelIcon name="cross" className="w-2.5 h-2.5" /></button>
         </div>
       </div>
 
@@ -688,11 +688,11 @@ function OutputCard(props: Props) {
         {!props.readOnly && (
           <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
             {connected && (
-              <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this output from everything">
+              <button onClick={() => props.onUnlink(node)} className="w-5 h-5 bg-[#1e2535] hover:bg-rose-950 border border-[#2d3a52] flex items-center justify-center text-slate-300 hover:text-rose-300" data-tip="Disconnect this output from everything" aria-label="Disconnect this output from everything">
                 <Unlink className="w-3 h-3" />
               </button>
             )}
-            <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove output"><PixelIcon name="cross" className="w-2.5 h-2.5" /></button>
+            <button onClick={() => props.onRemove(node)} className="w-5 h-5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/30 flex items-center justify-center text-rose-300 font-bold" data-tip="Remove output" aria-label="Remove output"><PixelIcon name="cross" className="w-2.5 h-2.5" /></button>
           </div>
         )}
       </div>

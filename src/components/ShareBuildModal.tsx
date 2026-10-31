@@ -61,7 +61,7 @@ export function ShareBuildModal({ flow, defaultName, pack, sourceFlowId, onShare
       <div className="w-[460px] max-w-full bg-[#161a24] border border-[#2b3548] shadow-2xl p-4 space-y-3 text-xs" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="font-bold text-sm text-slate-100">Share flow to Community</div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100" data-tip="Close" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
         <label className="block space-y-1">
           <span className="text-slate-400">Name</span>

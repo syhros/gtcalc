@@ -13,6 +13,9 @@ licences:
     only, share-alike.
 - Textures and icons in public/textures belong to Mojang and the authors of the
   mods in each pack, under their own licences.
+- Fonts: Silkscreen, VT323 and JetBrains Mono, under the SIL Open Font
+  License 1.1. The app bundles them from the @fontsource packages; the copy of
+  Silkscreen in public/fonts comes with its licence in public/fonts/OFL.txt.
 - npm dependencies are under their own licences (see package-lock.json).
 
 gtcalc is a free, fan-made tool and is not affiliated with or endorsed by

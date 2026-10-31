@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { arrayUnion, deleteDoc, doc, serverTimestamp, setDoc, updateDoc, writeBatch, type Firestore } from 'firebase/firestore';
+import { arrayUnion, deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch, type Firestore } from 'firebase/firestore';
 
 let env: RulesTestEnvironment;
 const FP = 'a'.repeat(24);
@@ -165,5 +165,30 @@ describe('updating a shared flow', () => {
     const db = as('bob');
     const b = update(db, { fp: FP2 });
     await assertFails(b.commit());
+  });
+});
+
+describe('saved flows', () => {
+  const flow = { name: 'Iron', savedAt: 2, draft: false, json: '{}', pack: 'gtnh' };
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore() as unknown as Firestore, 'users', 'alice', 'flows', 'f1'), { ...flow, savedAt: 1 }); });
+  });
+
+  it('the owner saves, reads and deletes their own', async () => {
+    await assertSucceeds(setDoc(doc(as('alice'), 'users', 'alice', 'flows', 'f1'), flow));
+    await assertSucceeds(getDoc(doc(as('alice'), 'users', 'alice', 'flows', 'f1')));
+    await assertSucceeds(deleteDoc(doc(as('alice'), 'users', 'alice', 'flows', 'f1')));
+  });
+
+  it("nobody else can read, overwrite, add to or delete someone's flows", async () => {
+    await assertFails(getDoc(doc(as('bob'), 'users', 'alice', 'flows', 'f1')));
+    await assertFails(setDoc(doc(as('bob'), 'users', 'alice', 'flows', 'f1'), flow));
+    await assertFails(setDoc(doc(as('bob'), 'users', 'alice', 'flows', 'f2'), flow));
+    await assertFails(deleteDoc(doc(as('bob'), 'users', 'alice', 'flows', 'f1')));
+    await assertFails(setDoc(doc(env.unauthenticatedContext().firestore() as unknown as Firestore, 'users', 'alice', 'flows', 'f2'), flow));
+  });
+
+  it('an older copy cannot overwrite a newer one', async () => {
+    await assertFails(setDoc(doc(as('alice'), 'users', 'alice', 'flows', 'f1'), { ...flow, savedAt: 0 }));
   });
 });
